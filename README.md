@@ -1,0 +1,164 @@
+# Exposed KSP
+
+**Exposed KSP** is Kotlin Symbol Processor for [Exposed SQL DSL](https://github.com/JetBrains/Exposed/wiki/DSL).
+
+
+## Example
+
+```kotlin
+@ExposedTable
+object UserTable : LongIdTable("users") {
+    /**
+     * Username
+     */
+    val username = varchar("username", 255)
+
+    /**
+     * password
+     */
+    val password = varchar("password", 255)
+
+    val birthDate = datetime("birth_date").nullable()
+}
+```
+### Result
+
+<details>
+<summary>Models</summary>
+#####
+
+```kotlin
+public interface UserTableCreate {
+    /**
+     * Username
+     */
+    public val username: String
+
+    /**
+     * password
+     */
+    public val password: String
+
+    public val birthDate: LocalDateTime?
+}
+
+public data class UserTableCreateDto(
+    /**
+     * Username
+     */
+    public override val username: String,
+    /**
+     * password
+     */
+    public override val password: String,
+    public override val birthDate: LocalDateTime? = null,
+) : UserTableCreate
+
+public interface UserTableFull : UserTableCreate {
+    public val id: Long
+}
+
+public data class UserTableFullDto(
+    public override val id: Long,
+    /**
+     * Username
+     */
+    public override val username: String,
+    /**
+     * password
+     */
+    public override val password: String,
+    public override val birthDate: LocalDateTime? = null,
+) : UserTableFull
+```
+</details>
+
+<details>
+<summary>Functions</summary>
+
+```kotlin
+public fun UserTable.insertCrud(dto: UserTableCreate): Unit {
+  UserTable.insert {
+    it.fromCrud(dto)
+  }
+}
+
+public fun UserTable.insertCrud(
+  username: String,
+  password: String,
+  birthDate: LocalDateTime? = null,
+): Unit {
+  UserTable.insert {
+    it.fromCrud(
+      username = username,
+      password = password,
+      birthDate = birthDate,
+    )
+  }
+}
+
+public fun UserTable.updateCrud(dto: UserTableFull): Unit {
+  UserTable.update {
+    it.fromCrud(dto)
+  }
+}
+
+public fun UserTable.updateCrud(
+  username: String,
+  password: String,
+  birthDate: LocalDateTime? = null,
+): Unit {
+  UserTable.update {
+    it.fromCrud(
+      username = username,
+      password = password,
+      birthDate = birthDate,
+    )
+  }
+}
+
+public fun UpdateBuilder<Any>.fromCrud(dto: UserTableCreate): Unit {
+  this[UserTable.username] = dto.username
+  this[UserTable.password] = dto.password
+  this[UserTable.birthDate] = dto.birthDate
+}
+
+public fun UpdateBuilder<Any>.fromCrud(
+  username: String,
+  password: String,
+  birthDate: LocalDateTime? = null,
+): Unit {
+  this[UserTable.username] = username
+  this[UserTable.password] = password
+  this[UserTable.birthDate] = birthDate
+}
+```
+</details>
+
+## Gradle setup
+
+Add KSP plugin to your module's `build.gradle.kts`:
+```kotlin
+plugins {
+    id("com.google.devtools.ksp") version "1.7.22-1.0.8"
+}
+```
+Add `Maven Central` to the repositories blocks in your project's `build.gradle.kts`:
+```kotlin
+repositories {
+    mavenCentral()
+}
+```
+Add `exposed-ksp` dependencies:
+```kotlin
+dependencies {
+    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.1.0")
+    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.1.0")
+}
+```
+To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:
+```kotlin
+sourceSets.configureEach {
+    kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
+}
+```

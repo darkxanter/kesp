@@ -62,8 +62,8 @@ val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
 publishing {
     publications {
         create<MavenPublication>("mavenCentral") {
+            artifactId = "exposed-ksp-$artifactId"
             from(components["java"])
-//            artifactId = "exposed-ksp-$artifactId"
             artifact(javadocJar)
 
             pom {
