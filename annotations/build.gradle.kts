@@ -1,3 +1,5 @@
+description = "Annotations for Exposed KSP"
+
 plugins {
     id("com.github.darkxanter.library-convention")
 }

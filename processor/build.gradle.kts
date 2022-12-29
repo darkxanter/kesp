@@ -1,3 +1,5 @@
+description = "Processor for Exposed KSP"
+
 val kspVersion: String by project
 val kotlinpoetVersion: String by project
 
