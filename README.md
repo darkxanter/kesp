@@ -25,7 +25,6 @@ object UserTable : LongIdTable("users") {
 
 <details>
 <summary>Models</summary>
-#####
 
 ```kotlin
 public interface UserTableCreate {
@@ -77,60 +76,61 @@ public data class UserTableFullDto(
 <summary>Functions</summary>
 
 ```kotlin
-public fun UserTable.insertCrud(dto: UserTableCreate): Unit {
-  UserTable.insert {
-    it.fromCrud(dto)
-  }
+public fun UserTable.insertDto(dto: UserTableCreate): Unit {
+    UserTable.insert {
+        it.fromDto(dto)
+    }
 }
 
-public fun UserTable.insertCrud(
-  username: String,
-  password: String,
-  birthDate: LocalDateTime? = null,
+public fun UserTable.updateDto(id: Long, dto: UserTableCreate): Unit {
+    UserTable.update({ UserTable.id.eq(id) }) {
+        it.fromDto(dto)
+    }
+}
+
+public fun UserTable.insertDto(
+    username: String,
+    password: String,
+    birthDate: LocalDateTime? = null,
 ): Unit {
-  UserTable.insert {
-    it.fromCrud(
-      username = username,
-      password = password,
-      birthDate = birthDate,
-    )
-  }
+    UserTable.insert {
+        it.fromDto(
+            username = username,
+            password = password,
+            birthDate = birthDate,
+        )
+    }
 }
 
-public fun UserTable.updateCrud(dto: UserTableFull): Unit {
-  UserTable.update {
-    it.fromCrud(dto)
-  }
-}
-
-public fun UserTable.updateCrud(
-  username: String,
-  password: String,
-  birthDate: LocalDateTime? = null,
+public fun UserTable.updateDto(
+    id: Long,
+    username: String,
+    password: String,
+    birthDate: LocalDateTime? = null,
 ): Unit {
-  UserTable.update {
-    it.fromCrud(
-      username = username,
-      password = password,
-      birthDate = birthDate,
-    )
-  }
+    UserTable.update({ UserTable.id.eq(id) }) {
+        it.fromDto(
+            username = username,
+            password = password,
+            birthDate = birthDate,
+        )
+    }
 }
 
-public fun UpdateBuilder<Any>.fromCrud(dto: UserTableCreate): Unit {
-  this[UserTable.username] = dto.username
-  this[UserTable.password] = dto.password
-  this[UserTable.birthDate] = dto.birthDate
+public fun UpdateBuilder<Any>.fromDto(dto: UserTableCreate): Unit {
+    this[UserTable.username] = dto.username
+    this[UserTable.password] = dto.password
+    this[UserTable.birthDate] = dto.birthDate
 }
 
-public fun UpdateBuilder<Any>.fromCrud(
-  username: String,
-  password: String,
-  birthDate: LocalDateTime? = null,
+public fun UpdateBuilder<Any>.fromDto(
+    username: String,
+    password: String,
+    birthDate: LocalDateTime? = null,
 ): Unit {
-  this[UserTable.username] = username
-  this[UserTable.password] = password
-  this[UserTable.birthDate] = birthDate
+    this[UserTable.username] = username
+    this[UserTable.password] = password
+    this[UserTable.birthDate] = birthDate
 }
 ```
 </details>
