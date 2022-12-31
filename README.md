@@ -1,4 +1,5 @@
 # Exposed KSP
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.darkxanter.exposed/exposed-ksp-annotations)](https://search.maven.org/artifact/io.github.darkxanter.exposed/exposed-ksp-annotations)
 
 **Exposed KSP** is Kotlin Symbol Processor for [Exposed SQL DSL](https://github.com/JetBrains/Exposed/wiki/DSL).
 
@@ -152,8 +153,8 @@ repositories {
 Add `exposed-ksp` dependencies:
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.1.0")
-    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.1.0")
+    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.1.1")
+    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.1.1")
 }
 ```
 To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:
