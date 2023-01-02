@@ -25,5 +25,9 @@ fun main() {
         val id = repository.create(dto)
         println("id = $id")
         println(repository.findById(id))
+        repository.update(id, dto.copy(username = "user"))
+        println(repository.findById(id))
+        repository.deleteById(id)
+        println(repository.findById(id))
     }
 }
