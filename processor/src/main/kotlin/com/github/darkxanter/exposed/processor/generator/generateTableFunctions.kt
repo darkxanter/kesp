@@ -1,15 +1,18 @@
 package com.github.darkxanter.exposed.processor.generator
 
+import com.github.darkxanter.exposed.processor.helpers.CallableParam
+import com.github.darkxanter.exposed.processor.helpers.addCall
 import com.github.darkxanter.exposed.processor.helpers.addCodeBlock
 import com.github.darkxanter.exposed.processor.helpers.addColumnsAsParameters
 import com.github.darkxanter.exposed.processor.helpers.addFunction
+import com.github.darkxanter.exposed.processor.helpers.addReturn
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asTypeName
 
-private const val MAPPING_FUN_NAME = "fromDto"
+private const val MAPPING_FROM_FUN_NAME = "fromDto"
 
 internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefinition) {
     val interfaceClassName = if (tableDefinition.hasGeneratedColumns)
@@ -17,7 +20,7 @@ internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefin
     else
         tableDefinition.fullInterfaceClassName
 
-    addImport("org.jetbrains.exposed.sql", "insert", "update")
+    addImport("org.jetbrains.exposed.sql", "insert", "update", "ResultRow")
 
     generateTableFunctions(interfaceClassName, tableDefinition)
     generateMappingFunctions(interfaceClassName, tableDefinition)
@@ -40,7 +43,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         addParameter("dto", interfaceClassName)
         addCodeBlock {
             beginControlFlow("$tableName.insert")
-            addStatement("it.$MAPPING_FUN_NAME(dto)")
+            addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
             endControlFlow()
         }
     }
@@ -53,18 +56,15 @@ private fun FileSpec.Builder.generateTableFunctions(
         addParameter("dto", interfaceClassName)
         addCodeBlock {
             beginControlFlow(getUpdateFun("id"))
-            addStatement("it.$MAPPING_FUN_NAME(dto)")
+            addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
             endControlFlow()
         }
     }
 
     fun CodeBlock.Builder.fillParams() {
-        add("it.$MAPPING_FUN_NAME(\n")
-        tableDefinition.commonColumns.forEach { column ->
-            val name = column.simpleName.asString()
-            addStatement("  $name = $name,")
+        addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { _, name ->
+            CallableParam(name, name)
         }
-        add(")\n")
     }
 
     addFunction("insertDto") {
@@ -96,11 +96,30 @@ private fun FileSpec.Builder.generateMappingFunctions(
     tableDefinition: TableDefinition,
 ) {
     val tableName = tableDefinition.tableName
+    val resultRowClassName = ClassName("org.jetbrains.exposed.sql", "ResultRow")
+
+    // read
+
+    addFunction("to${tableDefinition.fullDtoClassName.simpleName}") {
+        receiver(resultRowClassName)
+        returns(tableDefinition.fullDtoClassName)
+        addCodeBlock {
+            addReturn()
+            addCall(tableDefinition.fullDtoClassName.simpleName, tableDefinition.allColumns) { _, name ->
+                val isEntityId = name == "id"
+                val unwrap = if (isEntityId) ".value" else ""
+                CallableParam(name, "this[$tableName.$name]$unwrap")
+            }
+        }
+    }
+
+    // write
+
     val updateBuilderClassName = ClassName(
         "org.jetbrains.exposed.sql.statements", "UpdateBuilder"
     ).parameterizedBy(Any::class.asTypeName())
 
-    addFunction(MAPPING_FUN_NAME) {
+    addFunction(MAPPING_FROM_FUN_NAME) {
         receiver(updateBuilderClassName)
         addParameter("dto", interfaceClassName)
 
@@ -110,7 +129,7 @@ private fun FileSpec.Builder.generateMappingFunctions(
         }
     }
 
-    addFunction(MAPPING_FUN_NAME) {
+    addFunction(MAPPING_FROM_FUN_NAME) {
         receiver(updateBuilderClassName)
         addColumnsAsParameters(tableDefinition.commonColumns)
         tableDefinition.commonColumns.forEach { column ->

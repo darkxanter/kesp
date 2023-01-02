@@ -118,6 +118,13 @@ public fun UserTable.updateDto(
     }
 }
 
+public fun ResultRow.toUserTableFullDto(): UserTableFullDto = UserTableFullDto(
+    id = this[UserTable.id].value,
+    username = this[UserTable.username],
+    password = this[UserTable.password],
+    birthDate = this[UserTable.birthDate],
+)
+
 public fun UpdateBuilder<Any>.fromDto(dto: UserTableCreate): Unit {
     this[UserTable.username] = dto.username
     this[UserTable.password] = dto.password

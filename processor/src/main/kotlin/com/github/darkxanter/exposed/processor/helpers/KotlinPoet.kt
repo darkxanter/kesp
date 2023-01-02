@@ -130,3 +130,7 @@ internal fun createProperty(
     type: TypeName,
     builder: PropertySpec.Builder.() -> Unit,
 ) = PropertySpec.builder(name, type).apply(builder).build()
+
+// CodeBloc helpers
+
+internal fun CodeBlock.Builder.addReturn() = add("return ")

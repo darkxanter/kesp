@@ -3,6 +3,7 @@ package com.github.darkxanter.exposed.processor.helpers
 import com.github.darkxanter.exposed.processor.extensions.getFirstArgumentType
 import com.github.darkxanter.exposed.processor.extensions.unwrapEntityId
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
@@ -42,4 +43,20 @@ internal fun TypeSpec.Builder.addColumnsAsProperties(
             }
         }
     }
+}
+
+internal data class CallableParam(val target: String, val source: String)
+
+internal inline fun CodeBlock.Builder.addCall(
+    callableName: String,
+    columns: List<KSPropertyDeclaration>,
+    mappingFun: (column: KSPropertyDeclaration, name: String) -> CallableParam,
+) {
+    add("$callableName(\n")
+    columns.forEach { column ->
+        val name = column.simpleName.asString()
+        val param = mappingFun(column, name)
+        addStatement("  ${param.target} = ${param.source},")
+    }
+    add(")\n")
 }
