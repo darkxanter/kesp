@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.github.darkxanter.exposed.processor.helpers
 
 import com.google.devtools.ksp.symbol.KSType
@@ -6,6 +8,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
@@ -52,6 +55,11 @@ internal inline fun FileSpec.Builder.addFunction(
     crossinline builder: FunSpec.Builder.() -> Unit,
 ): FileSpec.Builder = addFunction(createFunction(name, builder))
 
+internal inline fun FileSpec.Builder.addFunction(
+    name: MemberName,
+    crossinline builder: FunSpec.Builder.() -> Unit,
+): FileSpec.Builder = addFunction(createFunction(name.simpleName, builder))
+
 internal fun FileSpec.Builder.addImport(
     type: KSType,
 ) = addImport(type.declaration.packageName.asString(), type.declaration.simpleName.asString())
@@ -69,6 +77,9 @@ internal fun FileSpec.Builder.suppressWarnings() {
             .addMember("%S", "RedundantVisibilityModifier")
             .addMember("%S", "UnusedReceiverParameter")
             .addMember("%S", "RedundantUnitReturnType")
+            .addMember("%S", "MemberVisibilityCanBePrivate")
+            .addMember("%S", "MatchingDeclarationName")
+            .addMember("%S", "FunctionParameterNaming")
             .useSiteTarget(AnnotationSpec.UseSiteTarget.FILE)
             .build()
     )
@@ -101,6 +112,8 @@ internal fun FunSpec.Builder.addParameter(
     builder: ParameterSpec.Builder.() -> Unit,
 ): FunSpec.Builder = addParameter(createParameter(name, type, builder))
 
+internal fun FunSpec.Builder.addReturn() = addCode("return ")
+
 // TypeSpec helpers
 
 internal inline fun createInterface(
@@ -122,6 +135,11 @@ internal fun TypeSpec.Builder.addProperty(
     type: TypeName,
     builder: PropertySpec.Builder.() -> Unit,
 ): TypeSpec.Builder = addProperty(createProperty(name, type, builder))
+
+internal inline fun TypeSpec.Builder.addFunction(
+    name: String,
+    crossinline builder: FunSpec.Builder.() -> Unit,
+): TypeSpec.Builder = addFunction(createFunction(name, builder))
 
 // PropertySpec helpers
 

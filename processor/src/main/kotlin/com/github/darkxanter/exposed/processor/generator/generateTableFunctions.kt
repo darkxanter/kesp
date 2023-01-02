@@ -10,6 +10,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 
 private const val MAPPING_FROM_FUN_NAME = "fromDto"
@@ -38,7 +39,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         "$tableName.update({ $tableName.id.eq($param) })"
     } ?: "$tableName.update"
 
-    addFunction("insertDto") {
+    addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableDefinition.tableClassName)
         addParameter("dto", interfaceClassName)
         addCodeBlock {
@@ -48,7 +49,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    addFunction("updateDto") {
+    addFunction(tableDefinition.updateDtoFunName) {
         receiver(tableClassName)
         idColumn?.let {
             addColumnsAsParameters(listOf(idColumn))
@@ -67,7 +68,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    addFunction("insertDto") {
+    addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableClassName)
         addColumnsAsParameters(tableDefinition.commonColumns)
         addCodeBlock {
@@ -77,7 +78,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    addFunction("updateDto") {
+    addFunction(tableDefinition.updateDtoFunName) {
         receiver(tableClassName)
         idColumn?.let {
             addColumnsAsParameters(listOf(idColumn))
@@ -100,7 +101,7 @@ private fun FileSpec.Builder.generateMappingFunctions(
 
     // read
 
-    addFunction("to${tableDefinition.fullDtoClassName.simpleName}") {
+    addFunction(tableDefinition.toDtoFunName) {
         receiver(resultRowClassName)
         returns(tableDefinition.fullDtoClassName)
         addCodeBlock {
@@ -110,6 +111,17 @@ private fun FileSpec.Builder.generateMappingFunctions(
                 val unwrap = if (isEntityId) ".value" else ""
                 CallableParam(name, "this[$tableName.$name]$unwrap")
             }
+        }
+    }
+
+    addFunction(tableDefinition.toDtoListFunName) {
+        receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
+        returns(List::class.asClassName().parameterizedBy(tableDefinition.fullDtoClassName))
+        addCodeBlock {
+            addReturn()
+            beginControlFlow("map")
+            addStatement("it.${tableDefinition.toDtoFunName}()")
+            endControlFlow()
         }
     }
 

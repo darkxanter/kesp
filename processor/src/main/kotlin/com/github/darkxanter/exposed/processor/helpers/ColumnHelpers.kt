@@ -53,10 +53,12 @@ internal inline fun CodeBlock.Builder.addCall(
     mappingFun: (column: KSPropertyDeclaration, name: String) -> CallableParam,
 ) {
     add("$callableName(\n")
+    indent()
     columns.forEach { column ->
         val name = column.simpleName.asString()
         val param = mappingFun(column, name)
-        addStatement("  ${param.target} = ${param.source},")
+        addStatement("${param.target} = ${param.source},")
     }
+    unindent()
     add(")\n")
 }
