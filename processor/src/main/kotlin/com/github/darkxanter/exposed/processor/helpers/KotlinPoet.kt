@@ -152,3 +152,8 @@ internal fun createProperty(
 // CodeBloc helpers
 
 internal fun CodeBlock.Builder.addReturn() = add("return ")
+
+internal fun CodeBlock.Builder.endControlFlow(returnStatement: String) {
+    unindent()
+    add("}$returnStatement\n")
+}

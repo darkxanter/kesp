@@ -6,8 +6,8 @@ import com.github.darkxanter.exposed.processor.helpers.addCodeBlock
 import com.github.darkxanter.exposed.processor.helpers.addColumnsAsParameters
 import com.github.darkxanter.exposed.processor.helpers.addFunction
 import com.github.darkxanter.exposed.processor.helpers.addReturn
+import com.github.darkxanter.exposed.processor.helpers.endControlFlow
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
@@ -21,8 +21,6 @@ internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefin
     else
         tableDefinition.fullInterfaceClassName
 
-    addImport("org.jetbrains.exposed.sql", "insert", "update", "ResultRow")
-
     generateTableFunctions(interfaceClassName, tableDefinition)
     generateMappingFunctions(interfaceClassName, tableDefinition)
 }
@@ -34,6 +32,15 @@ private fun FileSpec.Builder.generateTableFunctions(
     val tableName = tableDefinition.tableName
     val tableClassName = tableDefinition.tableClassName
     val idColumn = tableDefinition.idColumn
+    val idColumnClassName = tableDefinition.idColumnClassName
+
+    addImport(
+        "org.jetbrains.exposed.sql",
+        idColumn?.let { "insertAndGetId" } ?: "insert",
+        "update"
+    )
+
+    val insertFun = idColumnClassName?.let { "insertAndGetId" } ?: "insert"
 
     fun getUpdateFun(param: String) = idColumn?.let {
         "$tableName.update({ $tableName.id.eq($param) })"
@@ -42,51 +49,77 @@ private fun FileSpec.Builder.generateTableFunctions(
     addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableDefinition.tableClassName)
         addParameter("dto", interfaceClassName)
+
+        if (idColumnClassName != null) {
+            returns(idColumnClassName)
+            addReturn()
+        }
+
         addCodeBlock {
-            beginControlFlow("$tableName.insert")
+            beginControlFlow("$tableName.$insertFun")
             addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
-            endControlFlow()
+            if (idColumnClassName != null) {
+                endControlFlow(".value")
+            } else {
+                endControlFlow()
+            }
         }
     }
 
     addFunction(tableDefinition.updateDtoFunName) {
         receiver(tableClassName)
+        returns(Int::class)
+
         idColumn?.let {
             addColumnsAsParameters(listOf(idColumn))
         }
         addParameter("dto", interfaceClassName)
+
+        addReturn()
         addCodeBlock {
             beginControlFlow(getUpdateFun("id"))
             addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
             endControlFlow()
-        }
-    }
-
-    fun CodeBlock.Builder.fillParams() {
-        addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { _, name ->
-            CallableParam(name, name)
         }
     }
 
     addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableClassName)
         addColumnsAsParameters(tableDefinition.commonColumns)
+
+        if (idColumnClassName != null) {
+            returns(idColumnClassName)
+            addReturn()
+        }
+
         addCodeBlock {
-            beginControlFlow("$tableName.insert")
-            fillParams()
-            endControlFlow()
+            beginControlFlow("$tableName.$insertFun")
+            addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { _, name ->
+                CallableParam(name, name)
+            }
+            if (idColumnClassName != null) {
+                endControlFlow(".value")
+            } else {
+                endControlFlow()
+            }
         }
     }
 
     addFunction(tableDefinition.updateDtoFunName) {
         receiver(tableClassName)
+        returns(Int::class)
+
         idColumn?.let {
             addColumnsAsParameters(listOf(idColumn))
         }
         addColumnsAsParameters(tableDefinition.commonColumns)
+
+        addReturn()
         addCodeBlock {
             beginControlFlow(getUpdateFun("id"))
-            fillParams()
+            addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { _, name ->
+                CallableParam(name, name)
+            }
             endControlFlow()
         }
     }
@@ -98,6 +131,8 @@ private fun FileSpec.Builder.generateMappingFunctions(
 ) {
     val tableName = tableDefinition.tableName
     val resultRowClassName = ClassName("org.jetbrains.exposed.sql", "ResultRow")
+
+    addImport("org.jetbrains.exposed.sql", "ResultRow")
 
     // read
 

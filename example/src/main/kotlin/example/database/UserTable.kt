@@ -1,7 +1,9 @@
 package example.database
 
 import com.github.darkxanter.exposed.annotation.ExposedTable
+import com.github.darkxanter.exposed.annotation.GeneratedValue
 import org.jetbrains.exposed.dao.id.LongIdTable
+import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 
 @ExposedTable
@@ -17,4 +19,7 @@ object UserTable : LongIdTable("users") {
     val password = varchar("password", 255)
 
     val birthDate = datetime("birth_date").nullable()
+
+    @GeneratedValue
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 }

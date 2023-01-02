@@ -8,6 +8,7 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ksp.writeTo
 
 internal class ExposedTableGenerator(
@@ -24,20 +25,31 @@ internal class ExposedTableGenerator(
         logger.info("tableDefinition $tableDefinition")
 
         if (exposedTable.models) {
-            createFile(tableDefinition.packageName, "models") {
+            writeFile(tableDefinition, "models") {
                 generateModels(tableDefinition)
-            }.writeTo(codeGenerator, aggregating = false)
-
+            }
         }
         if (exposedTable.tableFunctions) {
-            createFile(tableDefinition.packageName, "functions") {
+            writeFile(tableDefinition, "functions") {
                 generateTableFunctions(tableDefinition)
-            }.writeTo(codeGenerator, aggregating = false)
+            }
         }
         if (exposedTable.crudRepository) {
-            createFile(tableDefinition.packageName, "repository") {
+            writeFile(tableDefinition, "repository") {
                 generateCrudRepository(tableDefinition)
-            }.writeTo(codeGenerator, aggregating = false)
+            }
         }
+    }
+
+    private inline fun writeFile(
+        tableDefinition: TableDefinition,
+        fileName: String,
+        crossinline builder: FileSpec.Builder.() -> Unit,
+    ) {
+        createFile(tableDefinition.packageName, fileName, builder).writeTo(
+            codeGenerator,
+            aggregating = false,
+            originatingKSFiles = listOf(tableDefinition.declaration.containingFile!!)
+        )
     }
 }

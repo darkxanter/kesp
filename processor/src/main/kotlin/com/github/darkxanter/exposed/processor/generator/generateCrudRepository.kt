@@ -71,6 +71,10 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
         addFunction("create") {
             addParameter("dto", tableDefinition.createInterfaceClassName)
+            tableDefinition.idColumnClassName?.let {
+                returns(it)
+                addReturn()
+            }
             transactionBlock {
                 addStatement("$tableName.${tableDefinition.insertDtoFunName}(dto)")
             }
@@ -79,8 +83,11 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
         // TODO handle id column with another name
         tableDefinition.idColumnClassName?.let { idClassName ->
             addFunction("update") {
+                returns(Int::class)
                 addParameter("id", idClassName)
                 addParameter("dto", tableDefinition.createInterfaceClassName)
+
+                addReturn()
                 transactionBlock {
                     addStatement("$tableName.${tableDefinition.updateDtoFunName}(id, dto)")
                 }
