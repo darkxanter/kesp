@@ -20,6 +20,9 @@ object UserTable : LongIdTable("users") {
     val password = varchar("password", 255)
 
     val birthDate = datetime("birth_date").nullable()
+
+    @GeneratedValue
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 }
 ```
 ### Result
@@ -56,6 +59,8 @@ public data class UserTableCreateDto(
 
 public interface UserTableFull : UserTableCreate {
     public val id: Long
+
+    public val createdAt: LocalDateTime
 }
 
 public data class UserTableFullDto(
@@ -69,6 +74,7 @@ public data class UserTableFullDto(
      */
     public override val password: String,
     public override val birthDate: LocalDateTime? = null,
+    public override val createdAt: LocalDateTime,
 ) : UserTableFull
 ```
 </details>
