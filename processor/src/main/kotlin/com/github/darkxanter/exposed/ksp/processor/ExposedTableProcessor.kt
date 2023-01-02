@@ -1,9 +1,9 @@
-package com.github.darkxanter.exposed.processor
+package com.github.darkxanter.exposed.ksp.processor
 
-import com.github.darkxanter.exposed.annotation.ExposedTable
-import com.github.darkxanter.exposed.processor.extensions.getSymbolsWithAnnotation
-import com.github.darkxanter.exposed.processor.extensions.isEmpty
-import com.github.darkxanter.exposed.processor.generator.ExposedTableGenerator
+import com.github.darkxanter.exposed.ksp.annotation.ExposedTable
+import com.github.darkxanter.exposed.ksp.processor.extensions.getSymbolsWithAnnotation
+import com.github.darkxanter.exposed.ksp.processor.extensions.isEmpty
+import com.github.darkxanter.exposed.ksp.processor.generator.ExposedTableGenerator
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver

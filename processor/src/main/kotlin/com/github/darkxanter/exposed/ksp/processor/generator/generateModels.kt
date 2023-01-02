@@ -1,10 +1,10 @@
-package com.github.darkxanter.exposed.processor.generator
+package com.github.darkxanter.exposed.ksp.processor.generator
 
-import com.github.darkxanter.exposed.processor.helpers.addClass
-import com.github.darkxanter.exposed.processor.helpers.addColumnsAsParameters
-import com.github.darkxanter.exposed.processor.helpers.addColumnsAsProperties
-import com.github.darkxanter.exposed.processor.helpers.addInterface
-import com.github.darkxanter.exposed.processor.helpers.addPrimaryConstructor
+import com.github.darkxanter.exposed.ksp.processor.helpers.addClass
+import com.github.darkxanter.exposed.ksp.processor.helpers.addColumnsAsParameters
+import com.github.darkxanter.exposed.ksp.processor.helpers.addColumnsAsProperties
+import com.github.darkxanter.exposed.ksp.processor.helpers.addInterface
+import com.github.darkxanter.exposed.ksp.processor.helpers.addPrimaryConstructor
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 

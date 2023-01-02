@@ -1,12 +1,12 @@
-package com.github.darkxanter.exposed.processor.generator
+package com.github.darkxanter.exposed.ksp.processor.generator
 
-import com.github.darkxanter.exposed.processor.helpers.CallableParam
-import com.github.darkxanter.exposed.processor.helpers.addCall
-import com.github.darkxanter.exposed.processor.helpers.addCodeBlock
-import com.github.darkxanter.exposed.processor.helpers.addColumnsAsParameters
-import com.github.darkxanter.exposed.processor.helpers.addFunction
-import com.github.darkxanter.exposed.processor.helpers.addReturn
-import com.github.darkxanter.exposed.processor.helpers.endControlFlow
+import com.github.darkxanter.exposed.ksp.processor.helpers.CallableParam
+import com.github.darkxanter.exposed.ksp.processor.helpers.addCall
+import com.github.darkxanter.exposed.ksp.processor.helpers.addCodeBlock
+import com.github.darkxanter.exposed.ksp.processor.helpers.addColumnsAsParameters
+import com.github.darkxanter.exposed.ksp.processor.helpers.addFunction
+import com.github.darkxanter.exposed.ksp.processor.helpers.addReturn
+import com.github.darkxanter.exposed.ksp.processor.helpers.endControlFlow
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy

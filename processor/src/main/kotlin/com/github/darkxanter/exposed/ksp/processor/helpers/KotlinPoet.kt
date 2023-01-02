@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.github.darkxanter.exposed.processor.helpers
+package com.github.darkxanter.exposed.ksp.processor.helpers
 
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.AnnotationSpec

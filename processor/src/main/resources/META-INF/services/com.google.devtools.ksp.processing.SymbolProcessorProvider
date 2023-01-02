@@ -1,1 +1,1 @@
-com.github.darkxanter.exposed.processor.ExposedTableProcessorProvider
+com.github.darkxanter.exposed.ksp.processor.ExposedTableProcessorProvider

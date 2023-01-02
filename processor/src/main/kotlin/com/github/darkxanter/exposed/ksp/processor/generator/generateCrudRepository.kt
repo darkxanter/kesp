@@ -1,10 +1,10 @@
-package com.github.darkxanter.exposed.processor.generator
+package com.github.darkxanter.exposed.ksp.processor.generator
 
-import com.github.darkxanter.exposed.processor.helpers.addClass
-import com.github.darkxanter.exposed.processor.helpers.addCodeBlock
-import com.github.darkxanter.exposed.processor.helpers.addFunction
-import com.github.darkxanter.exposed.processor.helpers.addParameter
-import com.github.darkxanter.exposed.processor.helpers.addReturn
+import com.github.darkxanter.exposed.ksp.processor.helpers.addClass
+import com.github.darkxanter.exposed.ksp.processor.helpers.addCodeBlock
+import com.github.darkxanter.exposed.ksp.processor.helpers.addFunction
+import com.github.darkxanter.exposed.ksp.processor.helpers.addParameter
+import com.github.darkxanter.exposed.ksp.processor.helpers.addReturn
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec

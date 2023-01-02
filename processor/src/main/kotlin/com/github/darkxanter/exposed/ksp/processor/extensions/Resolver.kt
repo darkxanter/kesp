@@ -1,4 +1,4 @@
-package com.github.darkxanter.exposed.processor.extensions
+package com.github.darkxanter.exposed.ksp.processor.extensions
 
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotated

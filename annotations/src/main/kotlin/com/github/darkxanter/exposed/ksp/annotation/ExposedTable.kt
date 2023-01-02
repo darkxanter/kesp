@@ -1,4 +1,4 @@
-package com.github.darkxanter.exposed.annotation
+package com.github.darkxanter.exposed.ksp.annotation
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)

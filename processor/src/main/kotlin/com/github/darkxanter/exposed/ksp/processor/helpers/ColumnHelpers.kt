@@ -1,7 +1,7 @@
-package com.github.darkxanter.exposed.processor.helpers
+package com.github.darkxanter.exposed.ksp.processor.helpers
 
-import com.github.darkxanter.exposed.processor.extensions.getFirstArgumentType
-import com.github.darkxanter.exposed.processor.extensions.unwrapEntityId
+import com.github.darkxanter.exposed.ksp.processor.extensions.getFirstArgumentType
+import com.github.darkxanter.exposed.ksp.processor.extensions.unwrapEntityId
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec

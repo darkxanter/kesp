@@ -1,7 +1,7 @@
 package example.database
 
-import com.github.darkxanter.exposed.annotation.ExposedTable
-import com.github.darkxanter.exposed.annotation.GeneratedValue
+import com.github.darkxanter.exposed.ksp.annotation.ExposedTable
+import com.github.darkxanter.exposed.ksp.annotation.GeneratedValue
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
