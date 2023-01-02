@@ -13,3 +13,11 @@ internal fun KSType.getFirstArgumentType(): KSType {
     val argumentType = argument.type ?: error("Argument $argument has no type")
     return argumentType.resolve()
 }
+
+internal fun KSType.unwrapEntityId(): KSType {
+    return if (isMatched("org.jetbrains.exposed.dao.id.EntityID")) {
+        getFirstArgumentType()
+    } else {
+        this
+    }
+}
