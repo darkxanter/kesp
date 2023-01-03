@@ -3,9 +3,11 @@ package com.github.darkxanter.exposed.ksp.processor.helpers
 import com.github.darkxanter.exposed.ksp.processor.extensions.getFirstArgumentType
 import com.github.darkxanter.exposed.ksp.processor.extensions.unwrapEntityId
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
 
@@ -28,6 +30,7 @@ internal fun TypeSpec.Builder.addColumnsAsProperties(
     columns: List<KSPropertyDeclaration>,
     parameter: Boolean = false,
     override: Boolean = false,
+    builder: PropertySpec.Builder.(type: KSType) -> Unit = {},
 ) {
     columns.forEach { column ->
         val type = column.type.resolve().getFirstArgumentType().unwrapEntityId()
@@ -41,6 +44,7 @@ internal fun TypeSpec.Builder.addColumnsAsProperties(
             if (override) {
                 addModifiers(KModifier.OVERRIDE)
             }
+            builder(type)
         }
     }
 }

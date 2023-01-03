@@ -231,13 +231,20 @@ repositories {
 Add `exposed-ksp` dependencies:
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.2.0")
-    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.2.0")
+    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.3.0")
+    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.3.0")
 }
 ```
 To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:
 ```kotlin
 sourceSets.configureEach {
     kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
+}
+```
+
+To create DTO with the `kotlinx.serialization.Serializable` annotation, add to `build.gradle.kts`:
+```kotlin
+ksp {
+    arg("exposedKsp.kotlinxSerialization", "true")
 }
 ```

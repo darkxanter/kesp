@@ -1,6 +1,7 @@
 package com.github.darkxanter.exposed.ksp.processor.generator
 
 import com.github.darkxanter.exposed.ksp.annotation.ExposedTable
+import com.github.darkxanter.exposed.ksp.processor.Configuration
 import com.github.darkxanter.exposed.ksp.processor.helpers.createFile
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
@@ -14,6 +15,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 internal class ExposedTableGenerator(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
+    private val configuration: Configuration,
 ) : KSVisitorVoid() {
     @OptIn(KspExperimental::class)
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -26,7 +28,7 @@ internal class ExposedTableGenerator(
 
         if (exposedTable.models) {
             writeFile(tableDefinition, "models") {
-                generateModels(tableDefinition)
+                generateModels(tableDefinition, configuration, logger)
             }
         }
         if (exposedTable.tableFunctions) {
@@ -49,7 +51,9 @@ internal class ExposedTableGenerator(
         createFile(tableDefinition.packageName, fileName, builder).writeTo(
             codeGenerator,
             aggregating = false,
-            originatingKSFiles = listOf(tableDefinition.declaration.containingFile!!)
+            originatingKSFiles = listOfNotNull(
+                tableDefinition.declaration.containingFile,
+            )
         )
     }
 }

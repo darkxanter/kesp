@@ -15,6 +15,7 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.buildCodeBlock
+import kotlin.reflect.KClass
 
 // FileSpec helpers
 
@@ -71,17 +72,17 @@ internal inline fun <reified Type : Any> FileSpec.Builder.addImport() {
 
 internal fun FileSpec.Builder.suppressWarnings() {
     addAnnotation(
-        AnnotationSpec
-            .builder(Suppress::class)
-            .addMember("%S", "unused")
-            .addMember("%S", "RedundantVisibilityModifier")
-            .addMember("%S", "UnusedReceiverParameter")
-            .addMember("%S", "RedundantUnitReturnType")
-            .addMember("%S", "MemberVisibilityCanBePrivate")
-            .addMember("%S", "MatchingDeclarationName")
-            .addMember("%S", "FunctionParameterNaming")
-            .useSiteTarget(AnnotationSpec.UseSiteTarget.FILE)
-            .build()
+        createAnnotation(Suppress::class) {
+            useSiteTarget(AnnotationSpec.UseSiteTarget.FILE)
+
+            addMember("%S", "unused")
+            addMember("%S", "RedundantVisibilityModifier")
+            addMember("%S", "UnusedReceiverParameter")
+            addMember("%S", "RedundantUnitReturnType")
+            addMember("%S", "MemberVisibilityCanBePrivate")
+            addMember("%S", "MatchingDeclarationName")
+            addMember("%S", "FunctionParameterNaming")
+        }
     )
 }
 
@@ -156,4 +157,27 @@ internal fun CodeBlock.Builder.addReturn() = add("return ")
 internal fun CodeBlock.Builder.endControlFlow(returnStatement: String) {
     unindent()
     add("}$returnStatement\n")
+}
+
+
+// Annotation helpers
+
+internal inline fun createAnnotation(
+    type: ClassName,
+    builder: AnnotationSpec.Builder.() -> Unit,
+): AnnotationSpec {
+    return AnnotationSpec
+        .builder(type)
+        .apply(builder)
+        .build()
+}
+
+internal inline fun createAnnotation(
+    type: KClass<out Annotation>,
+    builder: AnnotationSpec.Builder.() -> Unit,
+): AnnotationSpec {
+    return AnnotationSpec
+        .builder(type)
+        .apply(builder)
+        .build()
 }

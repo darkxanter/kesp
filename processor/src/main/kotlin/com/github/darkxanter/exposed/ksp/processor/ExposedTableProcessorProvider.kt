@@ -6,6 +6,10 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 
 public class ExposedTableProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-        return ExposedTableProcessor(environment.codeGenerator, environment.logger)
+        return ExposedTableProcessor(
+            environment.codeGenerator,
+            environment.logger,
+            environment.options,
+        )
     }
 }

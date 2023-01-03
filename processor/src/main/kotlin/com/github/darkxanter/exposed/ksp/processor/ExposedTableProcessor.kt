@@ -14,23 +14,28 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.validate
 
 public class ExposedTableProcessor(
-    codeGenerator: CodeGenerator,
+    private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
+    private val options: Map<String, String>,
 ) : SymbolProcessor {
-    private val exposedTableGenerator = ExposedTableGenerator(codeGenerator, logger)
-
     override fun process(resolver: Resolver): List<KSAnnotated> {
         logger.info("Start exposed-ksp processing round")
+        val configuration = Configuration(
+            kotlinxSerialization = options["exposedKsp.kotlinxSerialization"]?.toBoolean() ?: false
+        )
+        logger.info("$configuration")
+        val exposedTableGenerator = ExposedTableGenerator(codeGenerator, logger, configuration)
+
         val resolvedSymbols = resolver.getSymbolsWithAnnotation<ExposedTable>()
 
         val invalidSymbols = if (!resolvedSymbols.isEmpty()) {
-            val (validTrackers, invalidTrackers) = resolvedSymbols.partition { it.validate() }
-            validTrackers.filter { symbol ->
+            val (validSymbols, invalidSymbols) = resolvedSymbols.partition { it.validate() }
+            validSymbols.filter { symbol ->
                 symbol.isSymbolValid()
             }.forEach { classDeclaration ->
                 classDeclaration.accept(exposedTableGenerator, Unit)
             }
-            invalidTrackers
+            invalidSymbols
         } else {
             emptyList()
         }
