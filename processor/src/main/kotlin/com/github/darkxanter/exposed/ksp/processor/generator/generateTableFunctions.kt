@@ -10,16 +10,13 @@ import com.github.darkxanter.exposed.ksp.processor.helpers.endControlFlow
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
 
 private const val MAPPING_FROM_FUN_NAME = "fromDto"
 
 internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefinition) {
-    val interfaceClassName = if (tableDefinition.hasGeneratedColumns)
-        tableDefinition.createInterfaceClassName
-    else
-        tableDefinition.fullInterfaceClassName
+    val interfaceClassName = tableDefinition.createInterfaceClassName
 
     generateTableFunctions(interfaceClassName, tableDefinition)
     generateMappingFunctions(interfaceClassName, tableDefinition)
@@ -31,34 +28,46 @@ private fun FileSpec.Builder.generateTableFunctions(
 ) {
     val tableName = tableDefinition.tableName
     val tableClassName = tableDefinition.tableClassName
-    val idColumn = tableDefinition.idColumn
-    val idColumnClassName = tableDefinition.idColumnClassName
+    val primaryKey = tableDefinition.primaryKey
 
     addImport(
         "org.jetbrains.exposed.sql",
-        idColumn?.let { "insertAndGetId" } ?: "insert",
+        if (primaryKey.size == 1) "insertAndGetId" else "insert",
         "update"
     )
+    if (primaryKey.size > 1) {
+        addImport(
+            "org.jetbrains.exposed.sql",
+            "and"
+        )
+    }
 
-    val insertFun = idColumnClassName?.let { "insertAndGetId" } ?: "insert"
+    val insertFun = if (primaryKey.size == 1) "insertAndGetId" else "insert"
 
-    fun getUpdateFun(param: String) = idColumn?.let {
-        "$tableName.update({ $tableName.id.eq($param) })"
-    } ?: "$tableName.update"
+    val updateWhere = primaryKey.mapIndexed { index, column ->
+        val statement = "$tableName.${column.name}.eq(${column.name})"
+        if (index > 0)
+            ".and($statement)"
+        else
+            statement
+    }.joinToString("")
+
+    val updateFun = "$tableName.update({$updateWhere})"
 
     addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableDefinition.tableClassName)
         addParameter("dto", interfaceClassName)
 
-        if (idColumnClassName != null) {
-            returns(idColumnClassName)
+        primaryKey.singleOrNull()?.let {
+            returns(it.className)
             addReturn()
         }
 
         addCodeBlock {
             beginControlFlow("$tableName.$insertFun")
             addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
-            if (idColumnClassName != null) {
+
+            if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
                 endControlFlow(".value")
             } else {
                 endControlFlow()
@@ -66,38 +75,38 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    addFunction(tableDefinition.updateDtoFunName) {
-        receiver(tableClassName)
-        returns(Int::class)
+    if (primaryKey.isNotEmpty()) {
+        addFunction(tableDefinition.updateDtoFunName) {
+            receiver(tableClassName)
+            returns(Int::class)
 
-        idColumn?.let {
-            addColumnsAsParameters(listOf(idColumn))
-        }
-        addParameter("dto", interfaceClassName)
+            addColumnsAsParameters(primaryKey)
+            addParameter("dto", interfaceClassName)
 
-        addReturn()
-        addCodeBlock {
-            beginControlFlow(getUpdateFun("id"))
-            addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
-            endControlFlow()
+            addReturn()
+            addCodeBlock {
+                beginControlFlow(updateFun)
+                addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+                endControlFlow()
+            }
         }
     }
 
     addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableClassName)
-        addColumnsAsParameters(tableDefinition.commonColumns)
+        addColumnsAsParameters(tableDefinition.explicitColumns)
 
-        if (idColumnClassName != null) {
-            returns(idColumnClassName)
+        primaryKey.singleOrNull()?.let {
+            returns(it.className)
             addReturn()
         }
 
         addCodeBlock {
             beginControlFlow("$tableName.$insertFun")
-            addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { _, name ->
-                CallableParam(name, name)
+            addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.explicitColumns) { column ->
+                CallableParam(column.name, column.name)
             }
-            if (idColumnClassName != null) {
+            if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
                 endControlFlow(".value")
             } else {
                 endControlFlow()
@@ -105,22 +114,26 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    addFunction(tableDefinition.updateDtoFunName) {
-        receiver(tableClassName)
-        returns(Int::class)
+    if (primaryKey.isNotEmpty() && tableDefinition.commonColumns.isNotEmpty()) {
+        addFunction(tableDefinition.updateDtoFunName) {
+            receiver(tableClassName)
+            returns(Int::class)
 
-        idColumn?.let {
-            addColumnsAsParameters(listOf(idColumn))
-        }
-        addColumnsAsParameters(tableDefinition.commonColumns)
+            val columns = setOf(
+                primaryKey,
+                tableDefinition.explicitColumns,
+            ).flatten()
 
-        addReturn()
-        addCodeBlock {
-            beginControlFlow(getUpdateFun("id"))
-            addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { _, name ->
-                CallableParam(name, name)
+            addColumnsAsParameters(columns)
+
+            addReturn()
+            addCodeBlock {
+                beginControlFlow(updateFun)
+                addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { column ->
+                    CallableParam(column.name, column.name)
+                }
+                endControlFlow()
             }
-            endControlFlow()
         }
     }
 }
@@ -141,9 +154,9 @@ private fun FileSpec.Builder.generateMappingFunctions(
         returns(tableDefinition.fullDtoClassName)
         addCodeBlock {
             addReturn()
-            addCall(tableDefinition.fullDtoClassName.simpleName, tableDefinition.allColumns) { _, name ->
-                val isEntityId = name == "id"
-                val unwrap = if (isEntityId) ".value" else ""
+            addCall(tableDefinition.fullDtoClassName.simpleName, tableDefinition.allColumns) { column ->
+                val name = column.name
+                val unwrap = if (column.isEntityId) ".value" else ""
                 CallableParam(name, "this[$tableName.$name]$unwrap")
             }
         }
@@ -164,23 +177,23 @@ private fun FileSpec.Builder.generateMappingFunctions(
 
     val updateBuilderClassName = ClassName(
         "org.jetbrains.exposed.sql.statements", "UpdateBuilder"
-    ).parameterizedBy(Any::class.asTypeName())
+    ).parameterizedBy(STAR)
 
     addFunction(MAPPING_FROM_FUN_NAME) {
         receiver(updateBuilderClassName)
         addParameter("dto", interfaceClassName)
 
-        tableDefinition.commonColumns.forEach { column ->
-            val name = column.simpleName.asString()
+        tableDefinition.explicitColumns.forEach { column ->
+            val name = column.name
             addStatement("this[$tableName.$name] = dto.$name")
         }
     }
 
     addFunction(MAPPING_FROM_FUN_NAME) {
         receiver(updateBuilderClassName)
-        addColumnsAsParameters(tableDefinition.commonColumns)
-        tableDefinition.commonColumns.forEach { column ->
-            val name = column.simpleName.asString()
+        addColumnsAsParameters(tableDefinition.explicitColumns)
+        tableDefinition.explicitColumns.forEach { column ->
+            val name = column.name
             addStatement("this[$tableName.$name] = $name")
         }
     }

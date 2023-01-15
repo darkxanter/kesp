@@ -1,7 +1,6 @@
 package com.github.darkxanter.exposed.ksp.processor.generator
 
 import com.github.darkxanter.exposed.ksp.processor.Configuration
-import com.github.darkxanter.exposed.ksp.processor.extensions.getFirstArgumentType
 import com.github.darkxanter.exposed.ksp.processor.extensions.isAnnotated
 import com.github.darkxanter.exposed.ksp.processor.helpers.addClass
 import com.github.darkxanter.exposed.ksp.processor.helpers.addColumnsAsParameters
@@ -31,10 +30,8 @@ internal fun FileSpec.Builder.generateModels(
 ) {
     if (configuration.kotlinxSerialization) {
         val types = tableDefinition.allColumns.asSequence().flatMap { column ->
-            val columnType = column.type.resolve().getFirstArgumentType().makeNotNullable()
-
+            val columnType = column.type.makeNotNullable()
             val argTypes = columnType.arguments.map { it.type?.resolve()?.makeNotNullable() }
-
             argTypes.ifEmpty { listOf(columnType) }
         }.filterNotNull().filterNot {
             primitiveTypes.contains(it.declaration.qualifiedName?.asString())
@@ -54,29 +51,27 @@ internal fun FileSpec.Builder.generateModels(
         addAnnotation(annotation)
     }
 
-    if (tableDefinition.hasGeneratedColumns) {
-        addInterface(tableDefinition.createInterfaceClassName) {
-            addColumnsAsProperties(tableDefinition.commonColumns)
-        }
-        addClass(tableDefinition.createDtoClassName) {
-            addModifiers(KModifier.DATA)
-            addSuperinterface(tableDefinition.createInterfaceClassName)
+    val columns = tableDefinition.explicitColumns
 
-            if (configuration.kotlinxSerialization) {
-                addAnnotation(serializableAnnotation)
-            }
+    addInterface(tableDefinition.createInterfaceClassName) {
+        addColumnsAsProperties(columns)
+    }
+    addClass(tableDefinition.createDtoClassName) {
+        addModifiers(KModifier.DATA)
+        addSuperinterface(tableDefinition.createInterfaceClassName)
 
-            addPrimaryConstructor {
-                addColumnsAsParameters(tableDefinition.commonColumns)
-            }
-            addColumnsAsProperties(tableDefinition.commonColumns, parameter = true, override = true)
+        if (configuration.kotlinxSerialization) {
+            addAnnotation(serializableAnnotation)
         }
+
+        addPrimaryConstructor {
+            addColumnsAsParameters(columns)
+        }
+        addColumnsAsProperties(columns, parameter = true, override = true)
     }
 
     addInterface(tableDefinition.fullInterfaceClassName) {
-        if (tableDefinition.hasGeneratedColumns) {
-            addSuperinterface(tableDefinition.createInterfaceClassName)
-        }
+        addSuperinterface(tableDefinition.createInterfaceClassName)
         addColumnsAsProperties(tableDefinition.generatedColumns)
     }
     addClass(tableDefinition.fullDtoClassName) {

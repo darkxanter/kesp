@@ -1,8 +1,7 @@
 package com.github.darkxanter.exposed.ksp.processor.helpers
 
-import com.github.darkxanter.exposed.ksp.processor.extensions.getFirstArgumentType
 import com.github.darkxanter.exposed.ksp.processor.extensions.unwrapEntityId
-import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.github.darkxanter.exposed.ksp.processor.generator.ColumnDefinition
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -12,13 +11,13 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
 
 internal fun FunSpec.Builder.addColumnsAsParameters(
-    columns: List<KSPropertyDeclaration>,
+    columns: List<ColumnDefinition>,
     nullDefault: Boolean = true,
 ) {
     columns.forEach { column ->
-        val type = column.type.resolve().getFirstArgumentType().unwrapEntityId()
+        val type = column.type.unwrapEntityId()
         val typeName = type.toTypeName()
-        addParameter(column.simpleName.asString(), typeName) {
+        addParameter(column.name, typeName) {
             if (nullDefault && typeName.isNullable) {
                 defaultValue("%L", null)
             }
@@ -27,19 +26,19 @@ internal fun FunSpec.Builder.addColumnsAsParameters(
 }
 
 internal fun TypeSpec.Builder.addColumnsAsProperties(
-    columns: List<KSPropertyDeclaration>,
+    columns: List<ColumnDefinition>,
     parameter: Boolean = false,
     override: Boolean = false,
     builder: PropertySpec.Builder.(type: KSType) -> Unit = {},
 ) {
-    columns.forEach { column ->
-        val type = column.type.resolve().getFirstArgumentType().unwrapEntityId()
-        addProperty(column.simpleName.asString(), type.toTypeName()) {
+    columns.distinct().forEach { column ->
+        val type = column.type.unwrapEntityId()
+        addProperty(column.name, type.toTypeName()) {
             column.docString?.let {
                 addKdoc(it.trim())
             }
             if (parameter) {
-                initializer(column.simpleName.asString())
+                initializer(column.name)
             }
             if (override) {
                 addModifiers(KModifier.OVERRIDE)
@@ -53,14 +52,13 @@ internal data class CallableParam(val target: String, val source: String)
 
 internal inline fun CodeBlock.Builder.addCall(
     callableName: String,
-    columns: List<KSPropertyDeclaration>,
-    mappingFun: (column: KSPropertyDeclaration, name: String) -> CallableParam,
+    columns: List<ColumnDefinition>,
+    mappingFun: (column: ColumnDefinition) -> CallableParam,
 ) {
     add("$callableName(\n")
     indent()
     columns.forEach { column ->
-        val name = column.simpleName.asString()
-        val param = mappingFun(column, name)
+        val param = mappingFun(column)
         addStatement("${param.target} = ${param.source},")
     }
     unindent()

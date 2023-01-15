@@ -14,6 +14,7 @@ import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.buildCodeBlock
 
 internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefinition) {
     val tableName = tableDefinition.tableName
@@ -23,8 +24,17 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
     )
 
     addImport("org.jetbrains.exposed.sql.transactions", "transaction")
-    addImport("org.jetbrains.exposed.sql", "selectAll", "select", "deleteWhere")
+    addImport("org.jetbrains.exposed.sql", "selectAll", "select", "deleteWhere", "and")
     addImport("org.jetbrains.exposed.sql.SqlExpressionBuilder", "eq")
+
+    val whereBlock = buildCodeBlock {
+        tableDefinition.primaryKey.first().let {
+            addStatement("$tableName.${it.name}.eq(${it.name})")
+        }
+        tableDefinition.primaryKey.drop(1).forEach {
+            addStatement(".and($tableName.${it.name}.eq(${it.name}))")
+        }
+    }
 
     addClass(tableDefinition.repositoryClassName) {
         addModifiers(KModifier.OPEN)
@@ -56,23 +66,25 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
             addStatement("find(where).singleOrNull()")
         }
 
-        // TODO handle id column with another name
-        tableDefinition.idColumnClassName?.let { className ->
+        if (tableDefinition.primaryKey.isNotEmpty()) {
             addFunction("findById") {
                 returns(tableDefinition.fullDtoClassName.copy(nullable = true))
-                addParameter("id", className)
+                tableDefinition.primaryKey.forEach {
+                    addParameter(it.name, it.className)
+                }
                 addStatement("")
                 addReturn()
+
                 beginControlFlow("findOne")
-                addStatement("$tableName.id.eq(id)")
+                addCode(whereBlock)
                 endControlFlow()
             }
         }
 
         addFunction("create") {
             addParameter("dto", tableDefinition.createInterfaceClassName)
-            tableDefinition.idColumnClassName?.let {
-                returns(it)
+            tableDefinition.primaryKey.singleOrNull()?.let {
+                returns(it.className)
                 addReturn()
             }
             transactionBlock {
@@ -81,28 +93,30 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
         }
 
         // TODO handle id column with another name
-        tableDefinition.idColumnClassName?.let { idClassName ->
+        if (tableDefinition.primaryKey.isNotEmpty()) {
             addFunction("update") {
                 returns(Int::class)
-                addParameter("id", idClassName)
+                tableDefinition.primaryKey.forEach {
+                    addParameter(it.name, it.className)
+                }
                 addParameter("dto", tableDefinition.createInterfaceClassName)
 
                 addReturn()
                 transactionBlock {
-                    addStatement("$tableName.${tableDefinition.updateDtoFunName}(id, dto)")
+                    val primaryKey = tableDefinition.primaryKey.joinToString(", ") { it.name }
+                    addStatement("$tableName.${tableDefinition.updateDtoFunName}($primaryKey, dto)")
                 }
             }
-        }
 
-        // TODO handle id column with another name
-        tableDefinition.idColumnClassName?.let { className ->
             addFunction("deleteById") {
                 returns(Int::class)
-                addParameter("id", className)
+                tableDefinition.primaryKey.forEach {
+                    addParameter(it.name, it.className)
+                }
                 addStatement("")
                 addReturn()
                 beginControlFlow("delete")
-                addStatement("$tableName.id.eq(id)")
+                addCode(whereBlock)
                 endControlFlow()
             }
         }

@@ -10,8 +10,11 @@ internal val KSType.simpleName: String get() = declaration.simpleName.asString()
 
 internal fun KSType.getFirstArgumentType(): KSType {
     val argument = arguments.firstOrNull() ?: error("Type $this has no arguments")
-    val argumentType = argument.type ?: error("Argument $argument has no type")
-    return argumentType.resolve()
+    val argumentType = argument.type?.resolve() ?: error("Argument $argument has no type")
+    if (isMarkedNullable) {
+        return argumentType.makeNullable()
+    }
+    return argumentType
 }
 
 internal fun KSType.unwrapEntityId(): KSType {

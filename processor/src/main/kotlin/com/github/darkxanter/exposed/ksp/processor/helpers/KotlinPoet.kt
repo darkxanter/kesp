@@ -154,11 +154,17 @@ internal fun createProperty(
 
 internal fun CodeBlock.Builder.addReturn() = add("return ")
 
-internal fun CodeBlock.Builder.endControlFlow(returnStatement: String) {
+internal fun CodeBlock.Builder.endControlFlow(returnStatement: String, addLineBreak: Boolean = true) {
     unindent()
-    add("}$returnStatement\n")
+    add("}$returnStatement")
+    if (addLineBreak) add("\n")
 }
 
+internal fun CodeBlock.Builder.endControlFlow(addLineBreak: Boolean) {
+    unindent()
+    add("}")
+    if (addLineBreak) add("\n")
+}
 
 // Annotation helpers
 

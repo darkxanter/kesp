@@ -25,19 +25,21 @@ internal class ExposedTableGenerator(
 
         val tableDefinition = TableDefinition(classDeclaration)
         logger.info("tableDefinition $tableDefinition")
+        logger.info("allColumns ${tableDefinition.allColumns}")
+        logger.info("primaryKey ${tableDefinition.primaryKey}")
 
         if (exposedTable.models) {
-            writeFile(tableDefinition, "models") {
+            writeFile(tableDefinition, "${tableDefinition.tableName}Models") {
                 generateModels(tableDefinition, configuration, logger)
             }
         }
         if (exposedTable.tableFunctions) {
-            writeFile(tableDefinition, "functions") {
+            writeFile(tableDefinition, "${tableDefinition.tableName}Functions") {
                 generateTableFunctions(tableDefinition)
             }
         }
         if (exposedTable.crudRepository) {
-            writeFile(tableDefinition, "repository") {
+            writeFile(tableDefinition, "${tableDefinition.tableName}Repository") {
                 generateCrudRepository(tableDefinition)
             }
         }
