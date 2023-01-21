@@ -231,8 +231,8 @@ repositories {
 Add `exposed-ksp` dependencies:
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.3.0")
-    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.3.0")
+    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.4.0")
+    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.4.0")
 }
 ```
 To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:
