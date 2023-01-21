@@ -1,10 +1,18 @@
 package example
 
+import example.database.articles.ArticleTable
+import example.database.articles.ArticleTableCreateDto
+import example.database.articles.ArticleTableRepository
+import example.database.articles.ArticleTagsTable
+import example.database.articles.ArticleTagsTableCreateDto
+import example.database.articles.ArticleTagsTableRepository
+import example.database.articles.TagTable
+import example.database.articles.TagTableCreateDto
+import example.database.articles.TagTableRepository
 import example.database.users.UserProfile
 import example.database.users.UserTable
 import example.database.users.UserTableCreateDto
 import example.database.users.UserTableRepository
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
@@ -26,7 +34,10 @@ fun main() {
     Database.connect("jdbc:sqlite:file:test?mode=memory&cache=shared", "org.sqlite.JDBC")
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
-    val repository = UserTableRepository()
+    val userRepository = UserTableRepository()
+    val articleRepository = ArticleTableRepository()
+    val articleTagRepository = ArticleTagsTableRepository()
+    val tagRepository = TagTableRepository()
 
     val dto = UserTableCreateDto(
         "test",
@@ -36,16 +47,33 @@ fun main() {
 
     transaction {
         addLogger(StdOutSqlLogger)
-        SchemaUtils.createMissingTablesAndColumns(UserTable)
-        val id = repository.create(dto)
-        println("id = $id")
+        SchemaUtils.createMissingTablesAndColumns(
+            UserTable,
+            ArticleTable,
+            ArticleTagsTable,
+            TagTable,
+        )
 
-        val entity = repository.findById(id)
-        println(entity)
-        println(json.encodeToString(entity))
-        repository.update(id, dto.copy(username = "user"))
-        println(repository.findById(id))
-        repository.deleteById(id)
-        println(repository.findById(id))
+        val userId = userRepository.create(dto)
+
+        val tagId = tagRepository.create(TagTableCreateDto("example"))
+        tagRepository.update(tagId, TagTableCreateDto("Example"))
+
+        val articleId = articleRepository.create(ArticleTableCreateDto(
+            "Test Title",
+            "Some content",
+            userId,
+        ))
+        articleTagRepository.create(ArticleTagsTableCreateDto(articleId, tagId))
+
+        println(userRepository.find())
+        println(articleRepository.find())
+        println(articleTagRepository.find())
+        println(tagRepository.find())
+
+
+        articleRepository.deleteById(articleId)
+        tagRepository.deleteById(tagId)
+        userRepository.deleteById(userId)
     }
 }

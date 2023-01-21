@@ -92,8 +92,8 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
             }
         }
 
-        // TODO handle id column with another name
-        if (tableDefinition.primaryKey.isNotEmpty()) {
+
+        if (tableDefinition.hasUpdateFun) {
             addFunction("update") {
                 returns(Int::class)
                 tableDefinition.primaryKey.forEach {
@@ -107,7 +107,9 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                     addStatement("$tableName.${tableDefinition.updateDtoFunName}($primaryKey, dto)")
                 }
             }
-
+        }
+        
+        if (tableDefinition.primaryKey.isNotEmpty()) {
             addFunction("deleteById") {
                 returns(Int::class)
                 tableDefinition.primaryKey.forEach {

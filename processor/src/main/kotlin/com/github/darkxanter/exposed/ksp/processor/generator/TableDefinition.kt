@@ -27,7 +27,9 @@ internal data class TableDefinition(
     val generatedColumns = allColumns.filter { it.generated }
     val explicitColumns = allColumns.filter { !it.generated }
 
-    val hasGeneratedColumns get() = generatedColumns.isNotEmpty()
+    val hasGeneratedColumns = generatedColumns.isNotEmpty()
+
+    val hasUpdateFun = primaryKey.isNotEmpty() && commonColumns.isNotEmpty()
 
     val createInterfaceClassName = declaration.toClassName("${tableName}Create")
     val fullInterfaceClassName = declaration.toClassName("${tableName}Full")

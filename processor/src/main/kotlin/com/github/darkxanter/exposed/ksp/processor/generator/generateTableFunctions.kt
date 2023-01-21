@@ -75,7 +75,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    if (primaryKey.isNotEmpty()) {
+    if (tableDefinition.hasUpdateFun) {
         addFunction(tableDefinition.updateDtoFunName) {
             receiver(tableClassName)
             returns(Int::class)
@@ -114,7 +114,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    if (primaryKey.isNotEmpty() && tableDefinition.commonColumns.isNotEmpty()) {
+    if (tableDefinition.hasUpdateFun) {
         addFunction(tableDefinition.updateDtoFunName) {
             receiver(tableClassName)
             returns(Int::class)
