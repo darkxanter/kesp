@@ -27,5 +27,5 @@ sourceSets.configureEach {
 }
 
 ksp {
-    arg("exposedKsp.kotlinxSerialization", "true")
+    arg("kesp.kotlinxSerialization", "true")
 }

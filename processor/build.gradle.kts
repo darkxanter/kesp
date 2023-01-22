@@ -1,11 +1,11 @@
-description = "Processor for Exposed KSP"
-
 val kspVersion: String by project
 val kotlinpoetVersion: String by project
 
 plugins {
     id("com.github.darkxanter.library-convention")
 }
+
+description = "Processor for Exposed Kotlin Symbol Processor"
 
 dependencies {
     implementation(project(":annotations"))
@@ -14,5 +14,5 @@ dependencies {
 }
 
 tasks.jar {
-    archiveBaseName.set("exposed-ksp-${archiveBaseName.get()}")
+    archiveBaseName.set("kesp-${archiveBaseName.get()}")
 }

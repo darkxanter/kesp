@@ -1,9 +1,9 @@
-package com.github.darkxanter.exposed.ksp.processor
+package com.github.darkxanter.kesp.processor
 
-import com.github.darkxanter.exposed.ksp.annotation.ExposedTable
-import com.github.darkxanter.exposed.ksp.processor.extensions.getSymbolsWithAnnotation
-import com.github.darkxanter.exposed.ksp.processor.extensions.isEmpty
-import com.github.darkxanter.exposed.ksp.processor.generator.ExposedTableGenerator
+import com.github.darkxanter.kesp.annotation.ExposedTable
+import com.github.darkxanter.kesp.processor.extensions.getSymbolsWithAnnotation
+import com.github.darkxanter.kesp.processor.extensions.isEmpty
+import com.github.darkxanter.kesp.processor.generator.ExposedTableGenerator
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
@@ -19,9 +19,9 @@ public class ExposedTableProcessor(
     private val options: Map<String, String>,
 ) : SymbolProcessor {
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        logger.info("Start exposed-ksp processing round")
+        logger.info("Start kesp processing round")
         val configuration = Configuration(
-            kotlinxSerialization = options["exposedKsp.kotlinxSerialization"]?.toBoolean() ?: false
+            kotlinxSerialization = options["kesp.kotlinxSerialization"]?.toBoolean() ?: false
         )
         logger.info("$configuration")
         val exposedTableGenerator = ExposedTableGenerator(codeGenerator, logger, configuration)
@@ -39,7 +39,7 @@ public class ExposedTableProcessor(
         } else {
             emptyList()
         }
-        logger.info("Finish exposed-ksp processing round")
+        logger.info("Finish kesp processing round")
         return invalidSymbols
     }
 

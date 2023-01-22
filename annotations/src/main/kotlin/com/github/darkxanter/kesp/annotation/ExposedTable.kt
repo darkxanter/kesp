@@ -1,4 +1,4 @@
-package com.github.darkxanter.exposed.ksp.annotation
+package com.github.darkxanter.kesp.annotation
 
 /**
  * Specifies that code generation will be run for the table.

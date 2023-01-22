@@ -1,4 +1,4 @@
-rootProject.name = "exposed-ksp"
+rootProject.name = "kesp"
 
 pluginManagement {
     repositories {

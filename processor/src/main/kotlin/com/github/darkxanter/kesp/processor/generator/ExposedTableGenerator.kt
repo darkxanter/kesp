@@ -1,8 +1,8 @@
-package com.github.darkxanter.exposed.ksp.processor.generator
+package com.github.darkxanter.kesp.processor.generator
 
-import com.github.darkxanter.exposed.ksp.annotation.ExposedTable
-import com.github.darkxanter.exposed.ksp.processor.Configuration
-import com.github.darkxanter.exposed.ksp.processor.helpers.createFile
+import com.github.darkxanter.kesp.annotation.ExposedTable
+import com.github.darkxanter.kesp.processor.Configuration
+import com.github.darkxanter.kesp.processor.helpers.createFile
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator

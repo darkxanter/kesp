@@ -1,4 +1,4 @@
-package com.github.darkxanter.exposed.ksp.processor.extensions
+package com.github.darkxanter.kesp.processor.extensions
 
 import com.google.devtools.ksp.symbol.KSType
 

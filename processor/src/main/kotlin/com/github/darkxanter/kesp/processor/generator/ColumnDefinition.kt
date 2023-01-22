@@ -1,7 +1,7 @@
-package com.github.darkxanter.exposed.ksp.processor.generator
+package com.github.darkxanter.kesp.processor.generator
 
-import com.github.darkxanter.exposed.ksp.processor.extensions.isMatched
-import com.github.darkxanter.exposed.ksp.processor.extensions.unwrapEntityId
+import com.github.darkxanter.kesp.processor.extensions.isMatched
+import com.github.darkxanter.kesp.processor.extensions.unwrapEntityId
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.ksp.toClassName
 

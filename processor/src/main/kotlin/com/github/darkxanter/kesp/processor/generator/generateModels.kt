@@ -1,13 +1,13 @@
-package com.github.darkxanter.exposed.ksp.processor.generator
+package com.github.darkxanter.kesp.processor.generator
 
-import com.github.darkxanter.exposed.ksp.processor.Configuration
-import com.github.darkxanter.exposed.ksp.processor.extensions.isAnnotated
-import com.github.darkxanter.exposed.ksp.processor.helpers.addClass
-import com.github.darkxanter.exposed.ksp.processor.helpers.addColumnsAsParameters
-import com.github.darkxanter.exposed.ksp.processor.helpers.addColumnsAsProperties
-import com.github.darkxanter.exposed.ksp.processor.helpers.addInterface
-import com.github.darkxanter.exposed.ksp.processor.helpers.addPrimaryConstructor
-import com.github.darkxanter.exposed.ksp.processor.helpers.createAnnotation
+import com.github.darkxanter.kesp.processor.Configuration
+import com.github.darkxanter.kesp.processor.extensions.isAnnotated
+import com.github.darkxanter.kesp.processor.helpers.addClass
+import com.github.darkxanter.kesp.processor.helpers.addColumnsAsParameters
+import com.github.darkxanter.kesp.processor.helpers.addColumnsAsProperties
+import com.github.darkxanter.kesp.processor.helpers.addInterface
+import com.github.darkxanter.kesp.processor.helpers.addPrimaryConstructor
+import com.github.darkxanter.kesp.processor.helpers.createAnnotation
 import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec

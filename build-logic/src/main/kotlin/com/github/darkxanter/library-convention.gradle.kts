@@ -62,16 +62,16 @@ val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
 publishing {
     publications {
         create<MavenPublication>("mavenCentral") {
-            artifactId = "exposed-ksp-$artifactId"
+            artifactId = "kesp-$artifactId"
             from(components["java"])
             artifact(javadocJar)
 
             pom {
-                name.set("Exposed KSP")
+                name.set("Kesp")
                 afterEvaluate {
                     this@pom.description.set(project.description)
                 }
-                url.set("https://github.com/darkxanter/exposed-ksp")
+                url.set("https://github.com/darkxanter/kesp")
 
                 licenses {
                     license {
@@ -80,9 +80,9 @@ publishing {
                     }
                 }
                 scm {
-                    url.set("https://github.com/darkxanter/exposed-ksp")
-                    connection.set("scm:git:git://github.com/darkxanter/exposed-ksp.git")
-                    developerConnection.set("scm:git:git@github.com:darkxanter/exposed-ksp.git")
+                    url.set("https://github.com/darkxanter/kesp")
+                    connection.set("scm:git:git://github.com/darkxanter/kesp.git")
+                    developerConnection.set("scm:git:git@github.com:darkxanter/kesp.git")
                 }
                 developers {
                     developer {

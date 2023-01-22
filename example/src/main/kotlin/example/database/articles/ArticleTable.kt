@@ -1,8 +1,8 @@
 package example.database.articles
 
-import com.github.darkxanter.exposed.ksp.annotation.ExposedTable
-import com.github.darkxanter.exposed.ksp.annotation.GeneratedValue
-import com.github.darkxanter.exposed.ksp.annotation.Id
+import com.github.darkxanter.kesp.annotation.ExposedTable
+import com.github.darkxanter.kesp.annotation.GeneratedValue
+import com.github.darkxanter.kesp.annotation.Id
 import example.database.users.UserTable
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.dao.id.UUIDTable

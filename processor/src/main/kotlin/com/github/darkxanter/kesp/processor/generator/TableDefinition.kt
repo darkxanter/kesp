@@ -1,11 +1,11 @@
-package com.github.darkxanter.exposed.ksp.processor.generator
+package com.github.darkxanter.kesp.processor.generator
 
-import com.github.darkxanter.exposed.ksp.annotation.GeneratedValue
-import com.github.darkxanter.exposed.ksp.annotation.Id
-import com.github.darkxanter.exposed.ksp.processor.extensions.getFirstArgumentType
-import com.github.darkxanter.exposed.ksp.processor.extensions.isEmpty
-import com.github.darkxanter.exposed.ksp.processor.extensions.isMatched
-import com.github.darkxanter.exposed.ksp.processor.extensions.toClassName
+import com.github.darkxanter.kesp.annotation.GeneratedValue
+import com.github.darkxanter.kesp.annotation.Id
+import com.github.darkxanter.kesp.processor.extensions.getFirstArgumentType
+import com.github.darkxanter.kesp.processor.extensions.isEmpty
+import com.github.darkxanter.kesp.processor.extensions.isMatched
+import com.github.darkxanter.kesp.processor.extensions.toClassName
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.getAnnotationsByType
@@ -71,7 +71,7 @@ internal data class TableDefinition(
                 type = columnType.getFirstArgumentType(),
                 generated = isGeneratedColumn,
                 primaryKey = isPrimaryKey,
-                docString = declaration.docString,
+                docString = it.docString,
             )
         }.sortedBy {
             if (it.name == "id") 0 else 1

@@ -1,11 +1,21 @@
-# Exposed KSP
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.darkxanter.exposed/exposed-ksp-annotations)](https://search.maven.org/artifact/io.github.darkxanter.exposed/exposed-ksp-annotations)
+# Kesp
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.darkxanter.exposed/kesp-annotations)](https://search.maven.org/artifact/io.github.darkxanter.exposed/kesp-annotations)
 
-**Exposed KSP** is Kotlin Symbol Processor for [Exposed SQL DSL](https://github.com/JetBrains/Exposed/wiki/DSL).
+**Kesp** is Kotlin Symbol Processor for [Exposed SQL DSL](https://github.com/JetBrains/Exposed/wiki/DSL).
+It generates for you DTOs, table mappings and a CRUD repository for a Exposed table.
 
+## Features
+
+- generates table mappings and functions
+- generates data classes and interfaces
+- generates a CRUD repository
+- copies KDoc from columns to data class fields
+- you can use any custom columns, unlike libraries where you define a data class
+and only a table with supported build-in columns is generated
 
 ## Example
 
+Given a simple `UserTable`:
 ```kotlin
 @ExposedTable
 object UserTable : LongIdTable("users") {
@@ -19,16 +29,25 @@ object UserTable : LongIdTable("users") {
      */
     val password = varchar("password", 255)
 
-    val birthDate = datetime("birth_date").nullable()
+    val birthDate = date("birth_date").nullable()
+
+    val profile = json<UserProfile>("profile")
 
     @GeneratedValue
-    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
 }
+
+@Serializable
+data class UserProfile(
+    val value1: String,
+    val value2: Int,
+)
 ```
-### Result
+
+When we build the project we'll have:
 
 <details>
-<summary>Models</summary>
+<summary>DTOs</summary>
 
 ```kotlin
 public interface UserTableCreate {
@@ -42,9 +61,12 @@ public interface UserTableCreate {
      */
     public val password: String
 
-    public val birthDate: LocalDateTime?
+    public val birthDate: LocalDate?
+
+    public val profile: UserProfile
 }
 
+@Serializable
 public data class UserTableCreateDto(
     /**
      * Username
@@ -54,15 +76,17 @@ public data class UserTableCreateDto(
      * password
      */
     public override val password: String,
-    public override val birthDate: LocalDateTime? = null,
+    public override val birthDate: LocalDate? = null,
+    public override val profile: UserProfile,
 ) : UserTableCreate
 
 public interface UserTableFull : UserTableCreate {
     public val id: Long
 
-    public val createdAt: LocalDateTime
+    public val createdAt: Instant
 }
 
+@Serializable
 public data class UserTableFullDto(
     public override val id: Long,
     /**
@@ -73,82 +97,85 @@ public data class UserTableFullDto(
      * password
      */
     public override val password: String,
-    public override val birthDate: LocalDateTime? = null,
-    public override val createdAt: LocalDateTime,
+    public override val birthDate: LocalDate? = null,
+    public override val profile: UserProfile,
+    public override val createdAt: Instant,
 ) : UserTableFull
 ```
 </details>
 
 <details>
-<summary>Functions</summary>
+<summary>Table functions</summary>
 
 ```kotlin
-public fun UserTable.insertDto(dto: UserTableCreate): Unit {
-  UserTable.insert {
+public fun UserTable.insertDto(dto: UserTableCreate): Long = UserTable.insertAndGetId {
     it.fromDto(dto)
-  }
-}
+}.value
 
-public fun UserTable.updateDto(id: Long, dto: UserTableCreate): Unit {
-  UserTable.update({ UserTable.id.eq(id) }) {
-    it.fromDto(dto)
-  }
-}
+public fun UserTable.updateDto(id: Long, dto: UserTableCreate): Int =
+    UserTable.update({UserTable.id.eq(id)}) {
+        it.fromDto(dto)
+    }
 
 public fun UserTable.insertDto(
-  username: String,
-  password: String,
-  birthDate: LocalDateTime? = null,
-): Unit {
-  UserTable.insert {
+    username: String,
+    password: String,
+    birthDate: LocalDate? = null,
+    profile: UserProfile,
+): Long = UserTable.insertAndGetId {
     it.fromDto(
-      username = username,
-      password = password,
-      birthDate = birthDate,
+        username = username,
+        password = password,
+        birthDate = birthDate,
+        profile = profile,
     )
-  }
-}
+}.value
 
 public fun UserTable.updateDto(
-  id: Long,
-  username: String,
-  password: String,
-  birthDate: LocalDateTime? = null,
-): Unit {
-  UserTable.update({ UserTable.id.eq(id) }) {
+    id: Long,
+    username: String,
+    password: String,
+    birthDate: LocalDate? = null,
+    profile: UserProfile,
+): Int = UserTable.update({UserTable.id.eq(id)}) {
     it.fromDto(
-      username = username,
-      password = password,
-      birthDate = birthDate,
+        username = username,
+        password = password,
+        birthDate = birthDate,
+        profile = profile,
     )
-  }
 }
 
 public fun ResultRow.toUserTableFullDto(): UserTableFullDto = UserTableFullDto(
-  id = this[UserTable.id].value,
-  username = this[UserTable.username],
-  password = this[UserTable.password],
-  birthDate = this[UserTable.birthDate],
+    id = this[UserTable.id].value,
+    username = this[UserTable.username],
+    password = this[UserTable.password],
+    birthDate = this[UserTable.birthDate],
+    profile = this[UserTable.profile],
+    createdAt = this[UserTable.createdAt],
 )
 
 public fun Iterable<ResultRow>.toUserTableFullDtoList(): List<UserTableFullDto> = map {
-  it.toUserTableFullDto()
+    it.toUserTableFullDto()
 }
 
-public fun UpdateBuilder<Any>.fromDto(dto: UserTableCreate): Unit {
-  this[UserTable.username] = dto.username
-  this[UserTable.password] = dto.password
-  this[UserTable.birthDate] = dto.birthDate
+public fun UpdateBuilder<*>.fromDto(dto: UserTableCreate): Unit {
+    this[UserTable.username] = dto.username
+    this[UserTable.password] = dto.password
+    this[UserTable.birthDate] = dto.birthDate
+    this[UserTable.profile] = dto.profile
 }
 
-public fun UpdateBuilder<Any>.fromDto(
-  username: String,
-  password: String,
-  birthDate: LocalDateTime? = null,
+public fun UpdateBuilder<*>.fromDto(
+    username: String,
+    password: String,
+    birthDate: LocalDate? = null,
+    profile: UserProfile,
 ): Unit {
-  this[UserTable.username] = username
-  this[UserTable.password] = password
-  this[UserTable.birthDate] = birthDate
+    this[UserTable.username] = username
+    this[UserTable.password] = password
+    this[UserTable.birthDate] = birthDate
+    this[UserTable.profile] = profile
 }
 ```
 </details>
@@ -182,16 +209,12 @@ public open class UserTableRepository {
         }
     }
 
-    public fun create(dto: UserTableCreate): Unit {
-        transaction {
-            UserTable.insertDto(dto)
-        }
+    public fun create(dto: UserTableCreate): Long = transaction {
+        UserTable.insertDto(dto)
     }
 
-    public fun update(id: Long, dto: UserTableCreate): Unit {
-        transaction {
-            UserTable.updateDto(id, dto)
-        }
+    public fun update(id: Long, dto: UserTableCreate): Int = transaction {
+        UserTable.updateDto(id, dto)
     }
 
     public fun deleteById(id: Long): Int {
@@ -210,9 +233,10 @@ public open class UserTableRepository {
         }
     }
 }
-
 ```
 </details>
+
+You can find a complete project example in the `example` subdirectory.
 
 ## Gradle setup
 
@@ -228,11 +252,11 @@ repositories {
     mavenCentral()
 }
 ```
-Add `exposed-ksp` dependencies:
+Add `kesp` dependencies:
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:exposed-ksp-annotations:0.4.0")
-    ksp("io.github.darkxanter.exposed:exposed-ksp-processor:0.4.0")
+    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.5.0")
+    ksp("io.github.darkxanter.exposed:kesp-processor:0.5.0")
 }
 ```
 To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:
@@ -245,6 +269,6 @@ sourceSets.configureEach {
 To create DTO with the `kotlinx.serialization.Serializable` annotation, add to `build.gradle.kts`:
 ```kotlin
 ksp {
-    arg("exposedKsp.kotlinxSerialization", "true")
+    arg("kesp.kotlinxSerialization", "true")
 }
 ```

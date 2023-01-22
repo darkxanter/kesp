@@ -1,10 +1,10 @@
-package com.github.darkxanter.exposed.ksp.processor.generator
+package com.github.darkxanter.kesp.processor.generator
 
-import com.github.darkxanter.exposed.ksp.processor.helpers.addClass
-import com.github.darkxanter.exposed.ksp.processor.helpers.addCodeBlock
-import com.github.darkxanter.exposed.ksp.processor.helpers.addFunction
-import com.github.darkxanter.exposed.ksp.processor.helpers.addParameter
-import com.github.darkxanter.exposed.ksp.processor.helpers.addReturn
+import com.github.darkxanter.kesp.processor.helpers.addClass
+import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
+import com.github.darkxanter.kesp.processor.helpers.addFunction
+import com.github.darkxanter.kesp.processor.helpers.addParameter
+import com.github.darkxanter.kesp.processor.helpers.addReturn
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -108,7 +108,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                 }
             }
         }
-        
+
         if (tableDefinition.primaryKey.isNotEmpty()) {
             addFunction("deleteById") {
                 returns(Int::class)

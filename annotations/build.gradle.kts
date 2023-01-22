@@ -1,9 +1,9 @@
-description = "Annotations for Exposed KSP"
-
 plugins {
     id("com.github.darkxanter.library-convention")
 }
 
+description = "Annotations for Kesp Exposed Kotlin Symbol Processor"
+
 tasks.jar {
-    archiveBaseName.set("exposed-ksp-${archiveBaseName.get()}")
+    archiveBaseName.set("kesp-${archiveBaseName.get()}")
 }
