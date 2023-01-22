@@ -155,8 +155,23 @@ public fun ResultRow.toUserTableFullDto(): UserTableFullDto = UserTableFullDto(
     createdAt = this[UserTable.createdAt],
 )
 
+public fun ResultRow.toUserTableFullDto(alias: Alias<UserTable>): UserTableFullDto =
+    UserTableFullDto(
+        id = this[alias[UserTable.id]].value,
+        username = this[alias[UserTable.username]],
+        password = this[alias[UserTable.password]],
+        birthDate = this[alias[UserTable.birthDate]],
+        profile = this[alias[UserTable.profile]],
+        createdAt = this[alias[UserTable.createdAt]],
+    )
+
 public fun Iterable<ResultRow>.toUserTableFullDtoList(): List<UserTableFullDto> = map {
     it.toUserTableFullDto()
+}
+
+public fun Iterable<ResultRow>.toUserTableFullDtoList(alias: Alias<UserTable>):
+    List<UserTableFullDto> = map {
+    it.toUserTableFullDto(alias)
 }
 
 public fun UpdateBuilder<*>.fromDto(dto: UserTableCreate): Unit {
@@ -255,8 +270,8 @@ repositories {
 Add `kesp` dependencies:
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.5.0")
-    ksp("io.github.darkxanter.exposed:kesp-processor:0.5.0")
+    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.6.0")
+    ksp("io.github.darkxanter.exposed:kesp-processor:0.6.0")
 }
 ```
 To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:

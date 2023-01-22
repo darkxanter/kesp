@@ -144,8 +144,10 @@ private fun FileSpec.Builder.generateMappingFunctions(
 ) {
     val tableName = tableDefinition.tableName
     val resultRowClassName = ClassName("org.jetbrains.exposed.sql", "ResultRow")
+    val aliasClassName = ClassName("org.jetbrains.exposed.sql", "Alias")
+        .parameterizedBy(tableDefinition.tableClassName)
 
-    addImport("org.jetbrains.exposed.sql", "ResultRow")
+    addImport("org.jetbrains.exposed.sql", "ResultRow", "Alias")
 
     // read
 
@@ -162,6 +164,23 @@ private fun FileSpec.Builder.generateMappingFunctions(
         }
     }
 
+    addFunction(tableDefinition.toDtoFunName) {
+        receiver(resultRowClassName)
+        returns(tableDefinition.fullDtoClassName)
+
+        addParameter("alias", aliasClassName)
+
+        addCodeBlock {
+            addReturn()
+            addCall(tableDefinition.fullDtoClassName.simpleName, tableDefinition.allColumns) { column ->
+                val name = column.name
+                val unwrap = if (column.isEntityId) ".value" else ""
+                CallableParam(name, "this[alias[$tableName.$name]]$unwrap")
+            }
+        }
+    }
+
+
     addFunction(tableDefinition.toDtoListFunName) {
         receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
         returns(List::class.asClassName().parameterizedBy(tableDefinition.fullDtoClassName))
@@ -169,6 +188,20 @@ private fun FileSpec.Builder.generateMappingFunctions(
             addReturn()
             beginControlFlow("map")
             addStatement("it.${tableDefinition.toDtoFunName}()")
+            endControlFlow()
+        }
+    }
+
+    addFunction(tableDefinition.toDtoListFunName) {
+        receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
+        returns(List::class.asClassName().parameterizedBy(tableDefinition.fullDtoClassName))
+
+        addParameter("alias", aliasClassName)
+
+        addCodeBlock {
+            addReturn()
+            beginControlFlow("map")
+            addStatement("it.${tableDefinition.toDtoFunName}(alias)")
             endControlFlow()
         }
     }
