@@ -27,7 +27,7 @@ Given a simple `UserTable`:
 
 ```kotlin
 @ExposedTable
-@Projection(UserDto::class)
+@Projection(UserDto::class, updateFunction = true)
 object UserTable : LongIdTable("users") {
     /**
      * Username
@@ -141,6 +141,11 @@ public fun UserTable.updateDto(id: Long, dto: UserTableCreate): Int =
         it.fromDto(dto)
     }
 
+public fun UserTable.updateDto(id: Long, dto: UserDto): Int =
+    UserTable.update({ UserTable.id.eq(id) }) {
+        it.fromDto(dto)
+    }
+
 public fun UserTable.insertDto(
     username: String,
     password: String,
@@ -234,6 +239,10 @@ public fun UpdateBuilder<*>.fromDto(
     this[UserTable.birthDate] = birthDate
     this[UserTable.profile] = profile
 }
+
+public fun UpdateBuilder<*>.fromDto(dto: UserDto): Unit {
+    this[UserTable.username] = dto.username
+}
 ```
 
 </details>
@@ -288,6 +297,10 @@ public open class UserTableRepository {
     }
 
     public fun update(id: Long, dto: UserTableCreate): Int = transaction {
+        UserTable.updateDto(id, dto)
+    }
+
+    public fun updateUserDto(id: Long, dto: UserDto): Int = transaction {
         UserTable.updateDto(id, dto)
     }
 

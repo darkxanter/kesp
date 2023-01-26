@@ -89,6 +89,7 @@ hs_err_pid*
 .idea/modules.xml
 .idea/misc.xml
 .idea/kotlinc.xml
+.idea/GrepConsole.xml
 cmake-build-*/
 .idea/**/mongoSettings.xml
 *.iws

@@ -12,7 +12,7 @@ import org.jetbrains.exposed.sql.javatime.date
 import org.jetbrains.exposed.sql.javatime.timestamp
 
 @ExposedTable
-@Projection(UserDto::class)
+@Projection(UserDto::class, updateFunction = true)
 object UserTable : LongIdTable("users") {
     /**
      * Username

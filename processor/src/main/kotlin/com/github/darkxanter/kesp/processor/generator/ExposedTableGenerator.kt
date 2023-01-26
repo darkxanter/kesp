@@ -113,17 +113,36 @@ internal class ExposedTableGenerator(
         }.toList()
     }
 
+    data class ProjectionConfig(
+        val type: KSType,
+        val updateFunction: Boolean,
+    )
 
-    private fun getProjections(classDeclaration: KSClassDeclaration): Sequence<KSType> {
+    private fun getProjections(classDeclaration: KSClassDeclaration): Sequence<ProjectionConfig> {
         val projections = classDeclaration.filterAnnotations(Projection::class)
-            .mapNotNull { it.arguments.firstOrNull()?.value as? KSType }
+            .map { annotation ->
+                logger.info("annotation ${annotation.arguments}")
+
+                val type = annotation.arguments.find {
+                    it.name?.asString() == Projection::dataClass.name
+                }?.value as? KSType ?: logger.panic("couldn't cast dataClass to KSType", annotation)
+
+                val updateFunction = annotation.arguments.find {
+                    it.name?.asString() == Projection::updateFunction.name
+                }?.value as? Boolean ?: false
+
+                ProjectionConfig(
+                    type = type,
+                    updateFunction = updateFunction,
+                )
+            }
 //        val multipleProjections = classDeclaration.filterAnnotations(Projections::class)
 //            .mapNotNull {
 //                it.arguments.firstOrNull()?.value as? List<*>
 //            }
 //            .flatten()
 //            .filterIsInstance<KSType>()
-        return projections.distinct()
+        return projections.distinctBy { it.type }
     }
 
     private fun getProjectionDefinitions(
@@ -131,25 +150,35 @@ internal class ExposedTableGenerator(
         columns: List<ColumnDefinition>,
     ): List<ProjectionDefinition> {
         return getProjections(classDeclaration).map { projection ->
-            val projectionDeclaration = projection.declaration as? KSClassDeclaration
-                ?: logger.panic("${projection.declaration.qualifiedName} is not class", projection.declaration)
+
+            logger.info("projection $projection")
+
+            val projectionDeclaration = projection.type.declaration as? KSClassDeclaration
+                ?: logger.panic(
+                    "${projection.type.declaration.qualifiedName} is not class",
+                    projection.type.declaration
+                )
             val primaryConstructor = projectionDeclaration.primaryConstructor
                 ?: logger.panic(
-                    "${projection.declaration.qualifiedName} doesn't have primary constructor",
-                    projection.declaration
+                    "${projectionDeclaration.qualifiedName} doesn't have primary constructor",
+                    projectionDeclaration
                 )
             val parameters = primaryConstructor.parameters.mapNotNull { parameter ->
                 val column = columns.find { it.name == parameter.name?.asString() }
                 if (column == null && !parameter.hasDefault) {
                     logger.panic(
-                        "${projection.declaration.qualifiedName} parameter $parameter doesn't exists " +
+                        "${projectionDeclaration.qualifiedName} parameter $parameter doesn't exists " +
                             "in ${classDeclaration.simpleName.asString()} or has default value",
-                        projection.declaration
+                        projectionDeclaration
                     )
                 }
                 column
             }
-            ProjectionDefinition(projection, parameters)
+            ProjectionDefinition(
+                type = projection.type,
+                columns = parameters,
+                updateFunction = projection.updateFunction,
+            )
         }.toList()
     }
 }

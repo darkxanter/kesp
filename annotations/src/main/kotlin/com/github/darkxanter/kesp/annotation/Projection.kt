@@ -7,7 +7,11 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
 @Repeatable
-public annotation class Projection(val dataClass: KClass<*>)
+public annotation class Projection(
+    val dataClass: KClass<*>,
+    /** Generate update function for a data class */
+    val updateFunction: Boolean = false,
+)
 
 //@MustBeDocumented
 //@Target(AnnotationTarget.CLASS)

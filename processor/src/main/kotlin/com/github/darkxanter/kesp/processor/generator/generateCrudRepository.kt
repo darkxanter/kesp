@@ -104,18 +104,17 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
 
         if (tableDefinition.hasUpdateFun) {
-            addFunction("update") {
-                returns(Int::class)
-                tableDefinition.primaryKey.forEach {
-                    addParameter(it.name, it.className)
-                }
-                addParameter("dto", tableDefinition.createInterfaceClassName)
-
-                addReturn()
-                transactionBlock {
-                    val primaryKey = tableDefinition.primaryKey.joinToString(", ") { it.name }
-                    addStatement("$tableName.${tableDefinition.updateDtoFunName}($primaryKey, dto)")
-                }
+            addUpdateFunction(
+                name = "update",
+                dtoClassName = tableDefinition.createInterfaceClassName,
+                tableDefinition = tableDefinition,
+            )
+            tableDefinition.projections.filter { it.updateFunction }.forEach {
+                addUpdateFunction(
+                    name = "update${it.className.simpleName}",
+                    dtoClassName = it.className,
+                    tableDefinition = tableDefinition,
+                )
             }
         }
 
@@ -197,6 +196,29 @@ private fun TypeSpec.Builder.addFindFunction(
             nextControlFlow("else")
             addStatement("${tableName}${slice}.selectAll().apply(configure).$toFun")
             endControlFlow()
+        }
+    }
+}
+
+
+private fun TypeSpec.Builder.addUpdateFunction(
+    name: String,
+    dtoClassName: ClassName,
+    tableDefinition: TableDefinition,
+) {
+    val tableName = tableDefinition.tableName
+
+    addFunction(name) {
+        returns(Int::class)
+        tableDefinition.primaryKey.forEach {
+            addParameter(it.name, it.className)
+        }
+        addParameter("dto", dtoClassName)
+
+        addReturn()
+        transactionBlock {
+            val primaryKey = tableDefinition.primaryKey.joinToString(", ") { it.name }
+            addStatement("$tableName.${tableDefinition.updateDtoFunName}($primaryKey, dto)")
         }
     }
 }

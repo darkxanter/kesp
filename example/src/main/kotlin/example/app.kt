@@ -14,6 +14,7 @@ import example.database.users.UserTable
 import example.database.users.UserTableCreateDto
 import example.database.users.UserTableRepository
 import example.database.users.toUserTableFullDtoList
+import example.dto.UserDto
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -50,6 +51,8 @@ fun main() {
         )
 
         val userId = userRepository.create(dto)
+
+        userRepository.updateUserDto(userId, UserDto(userId, "another"))
 
         val tagId = tagRepository.create(TagTableCreateDto("example"))
         tagRepository.update(tagId, TagTableCreateDto("Example"))

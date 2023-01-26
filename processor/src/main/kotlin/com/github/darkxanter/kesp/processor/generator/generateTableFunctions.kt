@@ -80,19 +80,18 @@ private fun FileSpec.Builder.generateTableFunctions(
     }
 
     if (tableDefinition.hasUpdateFun) {
-        addFunction(tableDefinition.updateDtoFunName) {
-            receiver(tableClassName)
-            returns(Int::class)
+        generateUpdateFunction(
+            tableDefinition,
+            interfaceClassName,
+            updateFun,
+        )
 
-            addColumnsAsParameters(primaryKey)
-            addParameter("dto", interfaceClassName)
-
-            addReturn()
-            addCodeBlock {
-                beginControlFlow(updateFun)
-                addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
-                endControlFlow()
-            }
+        tableDefinition.projections.filter { it.updateFunction }.forEach {
+            generateUpdateFunction(
+                tableDefinition,
+                it.className,
+                updateFun,
+            )
         }
     }
 
@@ -144,6 +143,30 @@ private fun FileSpec.Builder.generateTableFunctions(
     }
 }
 
+private fun FileSpec.Builder.generateUpdateFunction(
+    tableDefinition: TableDefinition,
+    dtoClassName: ClassName,
+    updateFun: String,
+) {
+    addFunction(tableDefinition.updateDtoFunName) {
+        receiver(tableDefinition.tableClassName)
+        returns(Int::class)
+
+        addColumnsAsParameters(tableDefinition.primaryKey)
+        addParameter("dto", dtoClassName)
+
+        addReturn()
+        addCodeBlock {
+            beginControlFlow(updateFun)
+            addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+            endControlFlow()
+        }
+    }
+}
+
+/// ==============================================================================
+/// mappings
+
 private fun FileSpec.Builder.generateMappingFunctions(
     interfaceClassName: ClassName,
     tableDefinition: TableDefinition,
@@ -163,20 +186,15 @@ private fun FileSpec.Builder.generateMappingFunctions(
 
     // write
 
+    // Default mappings
+    generateWriteMappings(
+        interfaceClassName,
+        tableDefinition.explicitColumns,
+        tableDefinition,
+    )
     val updateBuilderClassName = ClassName(
         "org.jetbrains.exposed.sql.statements", "UpdateBuilder"
     ).parameterizedBy(STAR)
-
-    addFunction(MAPPING_FROM_FUN_NAME) {
-        receiver(updateBuilderClassName)
-        addParameter("dto", interfaceClassName)
-
-        tableDefinition.explicitColumns.forEach { column ->
-            val name = column.name
-            addStatement("this[$tableName.$name] = dto.$name")
-        }
-    }
-
     addFunction(MAPPING_FROM_FUN_NAME) {
         receiver(updateBuilderClassName)
         addColumnsAsParameters(tableDefinition.explicitColumns)
@@ -184,6 +202,11 @@ private fun FileSpec.Builder.generateMappingFunctions(
             val name = column.name
             addStatement("this[$tableName.$name] = $name")
         }
+    }
+
+
+    tableDefinition.projections.filter { it.updateFunction }.forEach { projection ->
+        generateWriteMappings(projection.className, projection.columns, tableDefinition)
     }
 }
 
@@ -256,3 +279,27 @@ private fun FileSpec.Builder.generateReadMappings(
     }
 }
 
+
+private fun FileSpec.Builder.generateWriteMappings(
+    dtoClassName: ClassName,
+    columns: List<ColumnDefinition>,
+    tableDefinition: TableDefinition,
+) {
+    val tableName = tableDefinition.tableName
+
+    val explicitColumns = columns.intersect(tableDefinition.explicitColumns.toSet())
+
+    val updateBuilderClassName = ClassName(
+        "org.jetbrains.exposed.sql.statements", "UpdateBuilder"
+    ).parameterizedBy(STAR)
+
+    addFunction(MAPPING_FROM_FUN_NAME) {
+        receiver(updateBuilderClassName)
+        addParameter("dto", dtoClassName)
+
+        explicitColumns.forEach { column ->
+            val name = column.name
+            addStatement("this[$tableName.$name] = dto.$name")
+        }
+    }
+}
