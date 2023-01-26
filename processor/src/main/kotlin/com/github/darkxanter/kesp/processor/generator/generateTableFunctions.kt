@@ -1,5 +1,7 @@
 package com.github.darkxanter.kesp.processor.generator
 
+import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
+import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
 import com.github.darkxanter.kesp.processor.helpers.CallableParam
 import com.github.darkxanter.kesp.processor.helpers.addCall
 import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
@@ -7,6 +9,7 @@ import com.github.darkxanter.kesp.processor.helpers.addColumnsAsParameters
 import com.github.darkxanter.kesp.processor.helpers.addFunction
 import com.github.darkxanter.kesp.processor.helpers.addReturn
 import com.github.darkxanter.kesp.processor.helpers.endControlFlow
+import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -14,8 +17,9 @@ import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.asClassName
 
 private const val MAPPING_FROM_FUN_NAME = "fromDto"
+private val resultRowClassName = ClassName("org.jetbrains.exposed.sql", "ResultRow")
 
-internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefinition) {
+internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefinition, logger: KSPLogger) {
     val interfaceClassName = tableDefinition.createInterfaceClassName
 
     generateTableFunctions(interfaceClassName, tableDefinition)
@@ -92,6 +96,8 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
+    /// insertDto and updateDto with columns as parameters
+
     addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableClassName)
         addColumnsAsParameters(tableDefinition.explicitColumns)
@@ -143,67 +149,16 @@ private fun FileSpec.Builder.generateMappingFunctions(
     tableDefinition: TableDefinition,
 ) {
     val tableName = tableDefinition.tableName
-    val resultRowClassName = ClassName("org.jetbrains.exposed.sql", "ResultRow")
-    val aliasClassName = ClassName("org.jetbrains.exposed.sql", "Alias")
-        .parameterizedBy(tableDefinition.tableClassName)
 
     addImport("org.jetbrains.exposed.sql", "ResultRow", "Alias")
 
     // read
 
-    addFunction(tableDefinition.toDtoFunName) {
-        receiver(resultRowClassName)
-        returns(tableDefinition.fullDtoClassName)
-        addCodeBlock {
-            addReturn()
-            addCall(tableDefinition.fullDtoClassName.simpleName, tableDefinition.allColumns) { column ->
-                val name = column.name
-                val unwrap = if (column.isEntityId) ".value" else ""
-                CallableParam(name, "this[$tableName.$name]$unwrap")
-            }
-        }
-    }
+    // Default mappings
+    generateReadMappings(tableDefinition.fullDtoClassName, tableDefinition.allColumns, tableDefinition)
 
-    addFunction(tableDefinition.toDtoFunName) {
-        receiver(resultRowClassName)
-        returns(tableDefinition.fullDtoClassName)
-
-        addParameter("alias", aliasClassName)
-
-        addCodeBlock {
-            addReturn()
-            addCall(tableDefinition.fullDtoClassName.simpleName, tableDefinition.allColumns) { column ->
-                val name = column.name
-                val unwrap = if (column.isEntityId) ".value" else ""
-                CallableParam(name, "this[alias[$tableName.$name]]$unwrap")
-            }
-        }
-    }
-
-
-    addFunction(tableDefinition.toDtoListFunName) {
-        receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
-        returns(List::class.asClassName().parameterizedBy(tableDefinition.fullDtoClassName))
-        addCodeBlock {
-            addReturn()
-            beginControlFlow("map")
-            addStatement("it.${tableDefinition.toDtoFunName}()")
-            endControlFlow()
-        }
-    }
-
-    addFunction(tableDefinition.toDtoListFunName) {
-        receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
-        returns(List::class.asClassName().parameterizedBy(tableDefinition.fullDtoClassName))
-
-        addParameter("alias", aliasClassName)
-
-        addCodeBlock {
-            addReturn()
-            beginControlFlow("map")
-            addStatement("it.${tableDefinition.toDtoFunName}(alias)")
-            endControlFlow()
-        }
+    tableDefinition.projections.forEach { projection ->
+        generateReadMappings(projection.className, projection.columns, tableDefinition)
     }
 
     // write
@@ -231,3 +186,73 @@ private fun FileSpec.Builder.generateMappingFunctions(
         }
     }
 }
+
+private fun FileSpec.Builder.generateReadMappings(
+    dtoClassName: ClassName,
+    columns: List<ColumnDefinition>,
+    tableDefinition: TableDefinition,
+) {
+    val tableName = tableDefinition.tableName
+
+    val functionName = "to${dtoClassName.simpleName}"
+    val functionListName = "${functionName}List"
+
+    val aliasClassName = ClassName("org.jetbrains.exposed.sql", "Alias")
+        .parameterizedBy(tableDefinition.tableClassName)
+
+    addFunction(functionName) {
+        receiver(resultRowClassName)
+        returns(dtoClassName)
+        addCodeBlock {
+            addReturn()
+            addCall(dtoClassName.simpleName, columns) { column ->
+                val name = column.name
+                val unwrap = if (column.isEntityId) ".value" else ""
+                CallableParam(name, "this[$tableName.$name]$unwrap")
+            }
+        }
+    }
+
+    addFunction(functionName) {
+        receiver(resultRowClassName)
+        returns(dtoClassName)
+
+        addParameter("alias", aliasClassName)
+
+        addCodeBlock {
+            addReturn()
+            addCall(dtoClassName.simpleName, columns) { column ->
+                val name = column.name
+                val unwrap = if (column.isEntityId) ".value" else ""
+                CallableParam(name, "this[alias[$tableName.$name]]$unwrap")
+            }
+        }
+    }
+
+
+    addFunction(functionListName) {
+        receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
+        returns(List::class.asClassName().parameterizedBy(dtoClassName))
+        addCodeBlock {
+            addReturn()
+            beginControlFlow("map")
+            addStatement("it.${functionName}()")
+            endControlFlow()
+        }
+    }
+
+    addFunction(functionListName) {
+        receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
+        returns(List::class.asClassName().parameterizedBy(dtoClassName))
+
+        addParameter("alias", aliasClassName)
+
+        addCodeBlock {
+            addReturn()
+            beginControlFlow("map")
+            addStatement("it.${functionName}(alias)")
+            endControlFlow()
+        }
+    }
+}
+

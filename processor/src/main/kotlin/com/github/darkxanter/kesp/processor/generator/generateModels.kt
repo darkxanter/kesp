@@ -2,6 +2,7 @@ package com.github.darkxanter.kesp.processor.generator
 
 import com.github.darkxanter.kesp.processor.Configuration
 import com.github.darkxanter.kesp.processor.extensions.isAnnotated
+import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
 import com.github.darkxanter.kesp.processor.helpers.addClass
 import com.github.darkxanter.kesp.processor.helpers.addColumnsAsParameters
 import com.github.darkxanter.kesp.processor.helpers.addColumnsAsProperties

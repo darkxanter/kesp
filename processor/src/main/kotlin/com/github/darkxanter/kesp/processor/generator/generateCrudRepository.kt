@@ -1,5 +1,7 @@
 package com.github.darkxanter.kesp.processor.generator
 
+import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
+import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
 import com.github.darkxanter.kesp.processor.helpers.addClass
 import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
 import com.github.darkxanter.kesp.processor.helpers.addFunction
@@ -12,16 +14,25 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.buildCodeBlock
 
+private val selectTypeName = LambdaTypeName.get(
+    receiver = ClassName("org.jetbrains.exposed.sql", "SqlExpressionBuilder"),
+    returnType = ClassName("org.jetbrains.exposed.sql", "Op").parameterizedBy(Boolean::class.asTypeName())
+)
+
+private val queryTypeName = LambdaTypeName.get(
+    receiver = ClassName("org.jetbrains.exposed.sql", "Query"),
+    returnType = UNIT,
+)
+
 internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefinition) {
     val tableName = tableDefinition.tableName
-    val selectTypeName = LambdaTypeName.get(
-        receiver = ClassName("org.jetbrains.exposed.sql", "SqlExpressionBuilder"),
-        returnType = ClassName("org.jetbrains.exposed.sql", "Op").parameterizedBy(Boolean::class.asTypeName())
-    )
+
 
     addImport("org.jetbrains.exposed.sql.transactions", "transaction")
     addImport("org.jetbrains.exposed.sql", "selectAll", "select", "deleteWhere", "and")
@@ -39,22 +50,21 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
     addClass(tableDefinition.repositoryClassName) {
         addModifiers(KModifier.OPEN)
 
-        addFunction("find") {
-            returns(List::class.asClassName().parameterizedBy(tableDefinition.fullDtoClassName))
+        addFindFunction(
+            name = "find",
+            tableName = tableName,
+            listClassName = tableDefinition.fullDtoClassName,
+            toFunctionName = tableDefinition.toDtoListFunName,
+        )
 
-            addParameter("where", selectTypeName.copy(nullable = true)) {
-                defaultValue("%L", null)
-            }
-
-            addStatement("")
-            addReturn()
-            transactionBlock {
-                beginControlFlow("if (where != null)")
-                addStatement("$tableName.select(where).${tableDefinition.toDtoListFunName}()")
-                nextControlFlow("else")
-                addStatement("$tableName.selectAll().${tableDefinition.toDtoListFunName}()")
-                endControlFlow()
-            }
+        tableDefinition.projections.forEach { projection ->
+            addFindFunction(
+                name = "find${projection.className.simpleName}",
+                tableName = tableName,
+                listClassName = projection.className,
+                toFunctionName = projection.toFunctionListName,
+                sliceColumns = projection.columns,
+            )
         }
 
         addFunction("findOne") {
@@ -63,7 +73,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
             addStatement("")
             addReturn()
-            addStatement("find(where).singleOrNull()")
+            addStatement("find(where = where).singleOrNull()")
         }
 
         if (tableDefinition.primaryKey.isNotEmpty()) {
@@ -149,5 +159,44 @@ private fun FunSpec.Builder.transactionBlock(transaction: CodeBlock.Builder.() -
         beginControlFlow("transaction")
         transaction()
         endControlFlow()
+    }
+}
+
+
+private fun TypeSpec.Builder.addFindFunction(
+    name: String,
+    tableName: String,
+    listClassName: ClassName,
+    toFunctionName: String,
+    sliceColumns: List<ColumnDefinition> = emptyList(),
+) {
+    val toFun = "${toFunctionName}()"
+
+    val slice = if (sliceColumns.isNotEmpty())
+        sliceColumns.joinToString(",", prefix = ".slice(", postfix = ")") {
+            "$tableName.${it.name}"
+        }
+    else ""
+
+    addFunction(name) {
+        returns(List::class.asClassName().parameterizedBy(listClassName))
+
+        addParameter("configure", queryTypeName) {
+            defaultValue("%L", "{}")
+        }
+
+        addParameter("where", selectTypeName.copy(nullable = true)) {
+            defaultValue("%L", null)
+        }
+
+        addStatement("")
+        addReturn()
+        transactionBlock {
+            beginControlFlow("if (where != null)")
+            addStatement("${tableName}${slice}.select(where).apply(configure).$toFun")
+            nextControlFlow("else")
+            addStatement("${tableName}${slice}.selectAll().apply(configure).$toFun")
+            endControlFlow()
+        }
     }
 }

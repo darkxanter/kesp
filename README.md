@@ -18,6 +18,7 @@ and only a table with supported build-in columns is generated
 Given a simple `UserTable`:
 ```kotlin
 @ExposedTable
+@Projection(UserDto::class)
 object UserTable : LongIdTable("users") {
     /**
      * Username
@@ -41,6 +42,15 @@ object UserTable : LongIdTable("users") {
 data class UserProfile(
     val value1: String,
     val value2: Int,
+)
+```
+
+And DTO for a table projection:
+```kotlin
+@Serializable
+data class UserDto(
+    val id: Long,
+    val username: String,
 )
 ```
 
@@ -106,6 +116,8 @@ public data class UserTableFullDto(
 
 <details>
 <summary>Table functions</summary>
+
+Extension functions will be created for generated DTOs from table, as well as for a specified projections in the annotation `@Projection`.
 
 ```kotlin
 public fun UserTable.insertDto(dto: UserTableCreate): Long = UserTable.insertAndGetId {
@@ -174,6 +186,24 @@ public fun Iterable<ResultRow>.toUserTableFullDtoList(alias: Alias<UserTable>):
     it.toUserTableFullDto(alias)
 }
 
+public fun ResultRow.toUserDto(): UserDto = UserDto(
+    id = this[UserTable.id].value,
+    username = this[UserTable.username],
+)
+
+public fun ResultRow.toUserDto(alias: Alias<UserTable>): UserDto = UserDto(
+    id = this[alias[UserTable.id]].value,
+    username = this[alias[UserTable.username]],
+)
+
+public fun Iterable<ResultRow>.toUserDtoList(): List<UserDto> = map {
+    it.toUserDto()
+}
+
+public fun Iterable<ResultRow>.toUserDtoList(alias: Alias<UserTable>): List<UserDto> = map {
+    it.toUserDto(alias)
+}
+
 public fun UpdateBuilder<*>.fromDto(dto: UserTableCreate): Unit {
     this[UserTable.username] = dto.username
     this[UserTable.password] = dto.password
@@ -200,21 +230,33 @@ public fun UpdateBuilder<*>.fromDto(
 
 ```kotlin
 public open class UserTableRepository {
-    public fun find(`where`: (SqlExpressionBuilder.() -> Op<Boolean>)? = null):
-        List<UserTableFullDto> {
+    public fun find(configure: Query.() -> Unit = {},
+                    `where`: (SqlExpressionBuilder.() -> Op<Boolean>)? = null): List<UserTableFullDto> {
 
         return transaction {
             if (where != null) {
-                UserTable.select(where).toUserTableFullDtoList()
+                UserTable.select(where).apply(configure).toUserTableFullDtoList()
             } else {
-                UserTable.selectAll().toUserTableFullDtoList()
+                UserTable.selectAll().apply(configure).toUserTableFullDtoList()
+            }
+        }
+    }
+
+    public fun findUserDto(configure: Query.() -> Unit = {},
+                           `where`: (SqlExpressionBuilder.() -> Op<Boolean>)? = null): List<UserDto> {
+
+        return transaction {
+            if (where != null) {
+                UserTable.slice(UserTable.id,UserTable.username).select(where).apply(configure).toUserDtoList()
+            } else {
+                UserTable.slice(UserTable.id,UserTable.username).selectAll().apply(configure).toUserDtoList()
             }
         }
     }
 
     public fun findOne(`where`: SqlExpressionBuilder.() -> Op<Boolean>): UserTableFullDto? {
 
-        return find(where).singleOrNull()
+        return find(where = where).singleOrNull()
     }
 
     public fun findById(id: Long): UserTableFullDto? {

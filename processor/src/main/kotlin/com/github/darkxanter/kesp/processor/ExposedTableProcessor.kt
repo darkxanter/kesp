@@ -2,7 +2,7 @@ package com.github.darkxanter.kesp.processor
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.processor.extensions.getSymbolsWithAnnotation
-import com.github.darkxanter.kesp.processor.extensions.isEmpty
+import com.github.darkxanter.kesp.processor.extensions.panic
 import com.github.darkxanter.kesp.processor.generator.ExposedTableGenerator
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
@@ -11,6 +11,7 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 
 public class ExposedTableProcessor(
@@ -25,29 +26,26 @@ public class ExposedTableProcessor(
         )
         logger.info("$configuration")
         val exposedTableGenerator = ExposedTableGenerator(codeGenerator, logger, configuration)
-
         val resolvedSymbols = resolver.getSymbolsWithAnnotation<ExposedTable>()
 
-        val invalidSymbols = if (!resolvedSymbols.isEmpty()) {
-            val (validSymbols, invalidSymbols) = resolvedSymbols.partition { it.validate() }
-            validSymbols.filter { symbol ->
-                symbol.isSymbolValid()
-            }.forEach { classDeclaration ->
-                classDeclaration.accept(exposedTableGenerator, Unit)
+        val invalidSymbols = processSymbols(resolvedSymbols, exposedTableGenerator) { symbol ->
+            if (symbol !is KSClassDeclaration || symbol.classKind != ClassKind.OBJECT) {
+                logger.panic("@ExposedTable can be applied only to object")
             }
-            invalidSymbols
-        } else {
-            emptyList()
         }
         logger.info("Finish kesp processing round")
         return invalidSymbols
     }
 
-    private fun KSAnnotated.isSymbolValid(): Boolean = when {
-        this is KSClassDeclaration && classKind == ClassKind.OBJECT -> true
-        else -> {
-            logger.error("@ExposedTable can be applied only to object")
-            false
+    private fun processSymbols(
+        resolvedSymbols: Sequence<KSAnnotated>,
+        visitor: KSVisitorVoid,
+        test: (KSAnnotated) -> Unit,
+    ): List<KSAnnotated> {
+        resolvedSymbols.filter { it.validate() }.forEach { classDeclaration ->
+            test(classDeclaration)
+            classDeclaration.accept(visitor, Unit)
         }
+        return resolvedSymbols.filterNot { it.validate() }.toList()
     }
 }

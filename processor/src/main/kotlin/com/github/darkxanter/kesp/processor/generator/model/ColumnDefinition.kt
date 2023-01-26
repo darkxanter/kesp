@@ -1,4 +1,4 @@
-package com.github.darkxanter.kesp.processor.generator
+package com.github.darkxanter.kesp.processor.generator.model
 
 import com.github.darkxanter.kesp.processor.extensions.isMatched
 import com.github.darkxanter.kesp.processor.extensions.unwrapEntityId

@@ -1,7 +1,7 @@
 package com.github.darkxanter.kesp.processor.helpers
 
 import com.github.darkxanter.kesp.processor.extensions.unwrapEntityId
-import com.github.darkxanter.kesp.processor.generator.ColumnDefinition
+import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
