@@ -10,6 +10,7 @@ It generates for you DTOs, table mappings and a CRUD repository for a Exposed ta
 - generates table mappings and functions
 - generates data classes and interfaces
 - generates a CRUD repository
+- generates mappings for table projections
 - copies KDoc from columns to data class fields
 - you can use any custom columns, unlike libraries where you define a data class
   and only a table with supported build-in columns is generated
