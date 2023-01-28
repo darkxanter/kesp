@@ -73,7 +73,7 @@ object UserTable : LongIdTable("users") {
 
 When we build the project we'll have:
 
-- Interfaces and data classes.
+- Interfaces and data classes:
   - `UserTableCreate` and `UserTableCreateDto` represent the row model for creating an entry in the table
   - `UserTableFull` and `UserTableFullDto` represent the full table model used to read from the table
 
@@ -286,7 +286,8 @@ public open class UserTableRepository {
 
 #### Projection example
 
-To create mapping functions and CRUD repository for projection data class you simply need to add the `@Projection` annotation above the target table and point to projection `KClass`.
+To create mapping functions and CRUD repository for a table projection,
+you need to add the `@Projection` annotation above the target table and point to a projection `KClass`.
 
 ```kotlin
 /** User account */
