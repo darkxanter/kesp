@@ -13,6 +13,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
 
 private val serializableAnnotation = ClassName("kotlinx.serialization", "Serializable")
@@ -55,11 +56,13 @@ internal fun FileSpec.Builder.generateModels(
     val columns = tableDefinition.explicitColumns
 
     addInterface(tableDefinition.createInterfaceClassName) {
+        addKDoc(tableDefinition)
         addColumnsAsProperties(columns)
     }
     addClass(tableDefinition.createDtoClassName) {
         addModifiers(KModifier.DATA)
         addSuperinterface(tableDefinition.createInterfaceClassName)
+        addKDoc(tableDefinition)
 
         if (configuration.kotlinxSerialization) {
             addAnnotation(serializableAnnotation)
@@ -73,11 +76,13 @@ internal fun FileSpec.Builder.generateModels(
 
     addInterface(tableDefinition.fullInterfaceClassName) {
         addSuperinterface(tableDefinition.createInterfaceClassName)
+        addKDoc(tableDefinition)
         addColumnsAsProperties(tableDefinition.generatedColumns)
     }
     addClass(tableDefinition.fullDtoClassName) {
         addModifiers(KModifier.DATA)
         addSuperinterface(tableDefinition.fullInterfaceClassName)
+        addKDoc(tableDefinition)
 
         if (configuration.kotlinxSerialization) {
             addAnnotation(serializableAnnotation)
@@ -87,5 +92,11 @@ internal fun FileSpec.Builder.generateModels(
             addColumnsAsParameters(tableDefinition.allColumns)
         }
         addColumnsAsProperties(tableDefinition.allColumns, parameter = true, override = true)
+    }
+}
+
+private fun TypeSpec.Builder.addKDoc(tableDefinition: TableDefinition) {
+    tableDefinition.declaration.docString?.let {
+        addKdoc(it.trim())
     }
 }
