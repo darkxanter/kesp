@@ -1,16 +1,16 @@
 package com.github.darkxanter.kesp.processor.generator.model
 
+import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.processor.extensions.toClassName
-import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.squareup.kotlinpoet.ksp.toClassName
 
-@OptIn(KspExperimental::class)
 @Suppress("MemberVisibilityCanBePrivate")
 internal data class TableDefinition(
     val declaration: KSClassDeclaration,
     val allColumns: List<ColumnDefinition>,
     val projections: List<ProjectionDefinition>,
+    val configuration: ExposedTable,
 ) {
     val tableName = declaration.simpleName.asString()
     val tableClassName = declaration.toClassName()

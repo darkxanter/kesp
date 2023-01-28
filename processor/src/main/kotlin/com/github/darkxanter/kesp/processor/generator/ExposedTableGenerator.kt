@@ -38,7 +38,7 @@ internal class ExposedTableGenerator(
 
         val columns = getTableColumns(classDeclaration)
         val projections = getProjectionDefinitions(classDeclaration, columns)
-        val tableDefinition = TableDefinition(classDeclaration, columns, projections)
+        val tableDefinition = TableDefinition(classDeclaration, columns, projections, exposedTable)
 
         logger.info("tableDefinition $tableDefinition")
         logger.info("allColumns ${tableDefinition.allColumns}")

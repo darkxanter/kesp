@@ -58,33 +58,37 @@ private fun FileSpec.Builder.generateTableFunctions(
 
     val updateFun = "$tableName.update({$updateWhere})"
 
-    addFunction(tableDefinition.insertDtoFunName) {
-        receiver(tableDefinition.tableClassName)
-        addParameter("dto", interfaceClassName)
+    if (tableDefinition.configuration.models) {
+        addFunction(tableDefinition.insertDtoFunName) {
+            receiver(tableDefinition.tableClassName)
+            addParameter("dto", interfaceClassName)
 
-        primaryKey.singleOrNull()?.let {
-            returns(it.className)
-            addReturn()
-        }
+            primaryKey.singleOrNull()?.let {
+                returns(it.className)
+                addReturn()
+            }
 
-        addCodeBlock {
-            beginControlFlow("$tableName.$insertFun")
-            addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+            addCodeBlock {
+                beginControlFlow("$tableName.$insertFun")
+                addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
 
-            if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
-                endControlFlow(".value")
-            } else {
-                endControlFlow()
+                if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
+                    endControlFlow(".value")
+                } else {
+                    endControlFlow()
+                }
             }
         }
     }
 
     if (tableDefinition.hasUpdateFun) {
-        generateUpdateFunction(
-            tableDefinition,
-            interfaceClassName,
-            updateFun,
-        )
+        if (tableDefinition.configuration.models) {
+            generateUpdateFunction(
+                tableDefinition,
+                interfaceClassName,
+                updateFun,
+            )
+        }
 
         tableDefinition.projections.filter { it.updateFunction }.forEach {
             generateUpdateFunction(
@@ -95,7 +99,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
-    /// insertDto and updateDto with columns as parameters
+/// insertDto and updateDto with columns as parameters
 
     addFunction(tableDefinition.insertDtoFunName) {
         receiver(tableClassName)
@@ -177,8 +181,10 @@ private fun FileSpec.Builder.generateMappingFunctions(
 
     // read
 
-    // Default mappings
-    generateReadMappings(tableDefinition.fullDtoClassName, tableDefinition.allColumns, tableDefinition)
+    if (tableDefinition.configuration.models) {
+        // Default mappings
+        generateReadMappings(tableDefinition.fullDtoClassName, tableDefinition.allColumns, tableDefinition)
+    }
 
     tableDefinition.projections.forEach { projection ->
         generateReadMappings(projection.className, projection.columns, tableDefinition)
@@ -186,12 +192,15 @@ private fun FileSpec.Builder.generateMappingFunctions(
 
     // write
 
-    // Default mappings
-    generateWriteMappings(
-        interfaceClassName,
-        tableDefinition.explicitColumns,
-        tableDefinition,
-    )
+    if (tableDefinition.configuration.models) {
+        // Default mappings
+        generateWriteMappings(
+            interfaceClassName,
+            tableDefinition.explicitColumns,
+            tableDefinition,
+        )
+    }
+
     val updateBuilderClassName = ClassName(
         "org.jetbrains.exposed.sql.statements", "UpdateBuilder"
     ).parameterizedBy(STAR)

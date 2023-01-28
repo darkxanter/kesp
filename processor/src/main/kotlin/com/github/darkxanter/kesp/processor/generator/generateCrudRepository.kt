@@ -50,71 +50,79 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
     addClass(tableDefinition.repositoryClassName) {
         addModifiers(KModifier.OPEN)
 
-        addFindFunction(
-            name = "find",
-            tableName = tableName,
-            listClassName = tableDefinition.fullDtoClassName,
-            toFunctionName = tableDefinition.toDtoListFunName,
-        )
+        if (tableDefinition.configuration.tableFunctions) {
 
-        tableDefinition.projections.forEach { projection ->
-            addFindFunction(
-                name = "find${projection.className.simpleName}",
-                tableName = tableName,
-                listClassName = projection.className,
-                toFunctionName = projection.toFunctionListName,
-                sliceColumns = projection.columns,
-            )
-        }
-
-        addFunction("findOne") {
-            returns(tableDefinition.fullDtoClassName.copy(nullable = true))
-            addParameter("where", selectTypeName)
-
-            addStatement("")
-            addReturn()
-            addStatement("find(where = where).singleOrNull()")
-        }
-
-        if (tableDefinition.primaryKey.isNotEmpty()) {
-            addFunction("findById") {
-                returns(tableDefinition.fullDtoClassName.copy(nullable = true))
-                tableDefinition.primaryKey.forEach {
-                    addParameter(it.name, it.className)
-                }
-                addStatement("")
-                addReturn()
-
-                beginControlFlow("findOne")
-                addCode(whereBlock)
-                endControlFlow()
-            }
-        }
-
-        addFunction("create") {
-            addParameter("dto", tableDefinition.createInterfaceClassName)
-            tableDefinition.primaryKey.singleOrNull()?.let {
-                returns(it.className)
-                addReturn()
-            }
-            transactionBlock {
-                addStatement("$tableName.${tableDefinition.insertDtoFunName}(dto)")
-            }
-        }
-
-
-        if (tableDefinition.hasUpdateFun) {
-            addUpdateFunction(
-                name = "update",
-                dtoClassName = tableDefinition.createInterfaceClassName,
-                tableDefinition = tableDefinition,
-            )
-            tableDefinition.projections.filter { it.updateFunction }.forEach {
-                addUpdateFunction(
-                    name = "update${it.className.simpleName}",
-                    dtoClassName = it.className,
-                    tableDefinition = tableDefinition,
+            if (tableDefinition.configuration.models) {
+                addFindFunction(
+                    name = "find",
+                    tableName = tableName,
+                    listClassName = tableDefinition.fullDtoClassName,
+                    toFunctionName = tableDefinition.toDtoListFunName,
                 )
+            }
+
+            tableDefinition.projections.forEach { projection ->
+                addFindFunction(
+                    name = "find${projection.className.simpleName}",
+                    tableName = tableName,
+                    listClassName = projection.className,
+                    toFunctionName = projection.toFunctionListName,
+                    sliceColumns = projection.columns,
+                )
+            }
+
+            if (tableDefinition.configuration.models) {
+                addFunction("findOne") {
+                    returns(tableDefinition.fullDtoClassName.copy(nullable = true))
+                    addParameter("where", selectTypeName)
+
+                    addStatement("")
+                    addReturn()
+                    addStatement("find(where = where).singleOrNull()")
+                }
+
+                if (tableDefinition.primaryKey.isNotEmpty()) {
+                    addFunction("findById") {
+                        returns(tableDefinition.fullDtoClassName.copy(nullable = true))
+                        tableDefinition.primaryKey.forEach {
+                            addParameter(it.name, it.className)
+                        }
+                        addStatement("")
+                        addReturn()
+
+                        beginControlFlow("findOne")
+                        addCode(whereBlock)
+                        endControlFlow()
+                    }
+                }
+
+                addFunction("create") {
+                    addParameter("dto", tableDefinition.createInterfaceClassName)
+                    tableDefinition.primaryKey.singleOrNull()?.let {
+                        returns(it.className)
+                        addReturn()
+                    }
+                    transactionBlock {
+                        addStatement("$tableName.${tableDefinition.insertDtoFunName}(dto)")
+                    }
+                }
+            }
+
+            if (tableDefinition.hasUpdateFun) {
+                if (tableDefinition.configuration.models) {
+                    addUpdateFunction(
+                        name = "update",
+                        dtoClassName = tableDefinition.createInterfaceClassName,
+                        tableDefinition = tableDefinition,
+                    )
+                }
+                tableDefinition.projections.filter { it.updateFunction }.forEach {
+                    addUpdateFunction(
+                        name = "update${it.className.simpleName}",
+                        dtoClassName = it.className,
+                        tableDefinition = tableDefinition,
+                    )
+                }
             }
         }
 
@@ -124,7 +132,6 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                 tableDefinition.primaryKey.forEach {
                     addParameter(it.name, it.className)
                 }
-                addStatement("")
                 addReturn()
                 beginControlFlow("delete")
                 addCode(whereBlock)

@@ -7,9 +7,14 @@ package com.github.darkxanter.kesp.annotation
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
 public annotation class ExposedTable(
-    /** Generate DTO for table. Required for CRUD repository generation. */
+    /** Generate DTOs for a table */
     val models: Boolean = true,
-    /** Generate extension methods for table. */
+    /**
+     * Generate extension methods:
+     * - `insertDto` and `updateDto` for a table
+     * - "to" mappings for `ResultRow`
+     * - `fromDto` mappings for `UpdateBuilder`
+     * */
     val tableFunctions: Boolean = true,
     /** Generate CRUD repository. */
     val crudRepository: Boolean = true,
