@@ -9,7 +9,6 @@ import example.database.articles.ArticleTagsTableRepository
 import example.database.articles.TagTable
 import example.database.articles.TagTableCreateDto
 import example.database.articles.TagTableRepository
-import example.database.users.UserProfile
 import example.database.users.UserTable
 import example.database.users.UserTableCreateDto
 import example.database.users.UserTableRepository
@@ -27,6 +26,8 @@ import java.sql.Connection
 
 fun main() {
     Database.connect("jdbc:sqlite:file:test?mode=memory&cache=shared", "org.sqlite.JDBC")
+//    Database.connect("jdbc:sqlite:./example.sqlite", "org.sqlite.JDBC")
+
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
     val userRepository = UserTableRepository()
@@ -37,9 +38,7 @@ fun main() {
     val dto = UserTableCreateDto(
         "test",
         "pass",
-        profile = UserProfile("answer", 42),
     )
-
 
     transaction {
         addLogger(StdOutSqlLogger)
@@ -49,6 +48,7 @@ fun main() {
             ArticleTagsTable,
             TagTable,
         )
+        printDivider()
 
         val userId = userRepository.create(dto)
 

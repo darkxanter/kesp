@@ -1,6 +1,15 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
+    <inspection_tool class="RedundantUnitReturnType" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Avoid Lints" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="RedundantVisibilityModifier" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Avoid Lints" level="WARNING" enabled="false" editorAttributes="WARNING_ATTRIBUTES" />
+    </inspection_tool>
     <inspection_tool class="ReplaceUntilWithRangeUntil" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="UnusedReceiverParameter" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Avoid Lints" level="WARNING" enabled="false" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
+    </inspection_tool>
   </profile>
 </component>

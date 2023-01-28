@@ -11,6 +11,7 @@ import org.jetbrains.exposed.sql.javatime.CurrentTimestamp
 import org.jetbrains.exposed.sql.javatime.date
 import org.jetbrains.exposed.sql.javatime.timestamp
 
+/** User account */
 @ExposedTable
 @Projection(UserDto::class, updateFunction = true)
 object UserTable : LongIdTable("users") {
@@ -19,22 +20,13 @@ object UserTable : LongIdTable("users") {
      */
     val username = varchar("username", 255)
 
-    /**
-     * password
-     */
+    /** User password */
     val password = varchar("password", 255)
 
+    /** Day of birth */
     val birthDate = date("birth_date").nullable()
 
-    val profile = json<UserProfile>("profile")
-
+    /** Account creation time */
     @GeneratedValue
     val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
 }
-
-
-@Serializable
-data class UserProfile(
-    val value1: String,
-    val value2: Int,
-)
