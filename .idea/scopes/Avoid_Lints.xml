@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Avoid Lints" pattern="file:*.md" />
+</component>
