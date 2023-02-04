@@ -1,0 +1,28 @@
+name: CI test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    name: Build & Test - Java ${{ matrix.java }} on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        java: [ 11, 17 ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+
+      - name: Build lib
+        run: ./gradlew assemble
+
+      - name: Run tests
+        run: ./gradlew test --info
