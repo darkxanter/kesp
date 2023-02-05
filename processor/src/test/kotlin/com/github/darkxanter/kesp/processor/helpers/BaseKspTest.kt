@@ -5,7 +5,6 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
-import org.assertj.core.api.Assertions.assertThat
 import kotlin.test.assertEquals
 
 open class BaseKspTest {
@@ -63,14 +62,14 @@ open class BaseKspTest {
         expectedFiles: List<KotlinFile>,
         actualFiles: List<KotlinFile>,
     ) {
-//        val expectedResult = kotlinCompilation(
-//            files = sourceFiles + expectedFiles.toSourceFiles()
-//        ).compile()
-//        assertEquals(
-//            KotlinCompilation.ExitCode.OK,
-//            expectedResult.exitCode,
-//            message = "Compile expected sources failed.",
-//        )
+        val expectedResult = kotlinCompilation(
+            files = sourceFiles + expectedFiles.toSourceFiles()
+        ).compile()
+        assertEquals(
+            KotlinCompilation.ExitCode.OK,
+            expectedResult.exitCode,
+            message = "Compile expected sources failed.",
+        )
 
         assertEquals(expectedFiles.size, actualFiles.size, message = "Unexpected count of generated files.")
 
@@ -80,7 +79,6 @@ open class BaseKspTest {
         expectedFilesSorted.zip(actualFilesSorted).forEach { (expected, actual) ->
             assertEquals(expected.name, actual.name, "File names don't match")
             assertEquals(expected.code.trim(), actual.code.trim(), "File ${expected.name} don't match")
-//            assertThat(actual.code.trim()).isEqualTo(expected.code.trim())
         }
     }
 }
