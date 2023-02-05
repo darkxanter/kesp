@@ -20,7 +20,7 @@ public class ExposedTableProcessor(
     private val options: Map<String, String>,
 ) : SymbolProcessor {
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        logger.info("Start kesp processing round")
+        logger.info("Kesp processing round start")
         val configuration = Configuration(
             kotlinxSerialization = options["kesp.kotlinxSerialization"]?.toBoolean() ?: false
         )
@@ -33,8 +33,12 @@ public class ExposedTableProcessor(
                 logger.panic("@ExposedTable can be applied only to object")
             }
         }
-        logger.info("Finish kesp processing round")
+        logger.info("Kesp processing round end")
         return invalidSymbols
+    }
+
+    override fun finish() {
+        logger.info("Kesp processing finished")
     }
 
     private fun processSymbols(

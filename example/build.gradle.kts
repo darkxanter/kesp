@@ -1,5 +1,7 @@
 val exposedVersion: String by project
 val sqliteVersion: String by project
+val kdatamapperVersion: String by project
+val kotlinxSerializationVersion: String by project
 
 plugins {
     kotlin("jvm")
@@ -12,6 +14,9 @@ dependencies {
     compileOnly(project(":annotations"))
     ksp(project(":processor"))
 
+    compileOnly("io.github.darkxanter:kdatamapper-core:$kdatamapperVersion")
+    ksp("io.github.darkxanter:kdatamapper-processor:$kdatamapperVersion")
+
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
@@ -19,7 +24,7 @@ dependencies {
 
     implementation("org.xerial:sqlite-jdbc:$sqliteVersion")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
 
 sourceSets.configureEach {
@@ -28,4 +33,15 @@ sourceSets.configureEach {
 
 ksp {
     arg("kesp.kotlinxSerialization", "true")
+}
+
+application {
+    mainClass.set("example.AppKt")
+}
+tasks {
+    jar {
+        manifest {
+            attributes("Main-Class" to application.mainClass.get())
+        }
+    }
 }
