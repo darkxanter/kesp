@@ -426,8 +426,8 @@ Add `kesp` dependencies:
 
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.7.1")
-    ksp("io.github.darkxanter.exposed:kesp-processor:0.7.1")
+    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.8.0")
+    ksp("io.github.darkxanter.exposed:kesp-processor:0.8.0")
 }
 ```
 
