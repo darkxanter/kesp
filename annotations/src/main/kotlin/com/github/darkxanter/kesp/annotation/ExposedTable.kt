@@ -18,4 +18,10 @@ public annotation class ExposedTable(
     val tableFunctions: Boolean = true,
     /** Generate CRUD repository. */
     val crudRepository: Boolean = true,
+    /**
+     * Generate DAO class
+     *
+     * _Supported only for IdTables_
+     */
+    val generateDao: Boolean = false,
 )
