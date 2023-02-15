@@ -7,6 +7,7 @@ import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
 import com.github.darkxanter.kesp.processor.helpers.addFunction
 import com.github.darkxanter.kesp.processor.helpers.addParameter
 import com.github.darkxanter.kesp.processor.helpers.addReturn
+import com.github.darkxanter.kesp.processor.helpers.createParameter
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -14,24 +15,32 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.buildCodeBlock
 
-private val selectTypeName = LambdaTypeName.get(
+private fun selectTypeName(tableTypeName: TypeName) = LambdaTypeName.get(
     receiver = ClassName("org.jetbrains.exposed.sql", "SqlExpressionBuilder"),
-    returnType = ClassName("org.jetbrains.exposed.sql", "Op").parameterizedBy(Boolean::class.asTypeName())
+    returnType = ClassName("org.jetbrains.exposed.sql", "Op").parameterizedBy(Boolean::class.asTypeName()),
+    parameters = listOf(
+        createParameter("table", tableTypeName)
+    )
 )
 
-private val queryTypeName = LambdaTypeName.get(
+private fun queryTypeName(tableTypeName: TypeName) = LambdaTypeName.get(
     receiver = ClassName("org.jetbrains.exposed.sql", "Query"),
     returnType = UNIT,
+    parameters = listOf(
+        createParameter("table", tableTypeName)
+    )
 )
 
 internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefinition) {
     val tableName = tableDefinition.tableName
+    val tableTypeName = tableDefinition.tableClassName
 
 
     addImport("org.jetbrains.exposed.sql.transactions", "transaction")
@@ -56,6 +65,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                 addFindFunction(
                     name = "find",
                     tableName = tableName,
+                    tableTypeName = tableTypeName,
                     listClassName = tableDefinition.fullDtoClassName,
                     toFunctionName = tableDefinition.toDtoListFunName,
                 )
@@ -65,6 +75,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                 addFindFunction(
                     name = "find${projection.className.simpleName}",
                     tableName = tableName,
+                    tableTypeName = tableTypeName,
                     listClassName = projection.className,
                     toFunctionName = projection.toFunctionListName,
                     sliceColumns = projection.columns,
@@ -74,7 +85,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
             if (tableDefinition.configuration.models) {
                 addFunction("findOne") {
                     returns(tableDefinition.fullDtoClassName.copy(nullable = true))
-                    addParameter("where", selectTypeName)
+                    addParameter("where", selectTypeName(tableTypeName))
 
                     addStatement("")
                     addReturn()
@@ -172,6 +183,7 @@ private fun FunSpec.Builder.transactionBlock(transaction: CodeBlock.Builder.() -
 private fun TypeSpec.Builder.addFindFunction(
     name: String,
     tableName: String,
+    tableTypeName: TypeName,
     listClassName: ClassName,
     toFunctionName: String,
     sliceColumns: List<ColumnDefinition> = emptyList(),
@@ -187,11 +199,11 @@ private fun TypeSpec.Builder.addFindFunction(
     addFunction(name) {
         returns(List::class.asClassName().parameterizedBy(listClassName))
 
-        addParameter("configure", queryTypeName) {
+        addParameter("configure", queryTypeName(tableTypeName)) {
             defaultValue("%L", "{}")
         }
 
-        addParameter("where", selectTypeName.copy(nullable = true)) {
+        addParameter("where", selectTypeName(tableTypeName).copy(nullable = true)) {
             defaultValue("%L", null)
         }
 
@@ -199,9 +211,9 @@ private fun TypeSpec.Builder.addFindFunction(
         addReturn()
         transactionBlock {
             beginControlFlow("if (where != null)")
-            addStatement("${tableName}${slice}.select(where).apply(configure).$toFun")
+            addStatement("${tableName}${slice}.select{where($tableName)}.apply{configure($tableName)}.$toFun")
             nextControlFlow("else")
-            addStatement("${tableName}${slice}.selectAll().apply(configure).$toFun")
+            addStatement("${tableName}${slice}.selectAll().apply{configure($tableName)}.$toFun")
             endControlFlow()
         }
     }

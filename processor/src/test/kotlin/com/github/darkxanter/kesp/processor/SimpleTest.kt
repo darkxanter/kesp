@@ -321,19 +321,21 @@ class SimpleTest : BaseKspTest() {
                 import org.jetbrains.exposed.sql.transactions.transaction
 
                 public open class UserTableRepository {
-                  public fun find(configure: Query.() -> Unit = {},
-                      `where`: (SqlExpressionBuilder.() -> Op<Boolean>)? = null): List<UserTableFullDto> {
+                  public fun find(configure: Query.(table: UserTable) -> Unit = {},
+                      `where`: (SqlExpressionBuilder.(table: UserTable) -> Op<Boolean>)? = null):
+                      List<UserTableFullDto> {
 
                     return transaction {
                       if (where != null) {
-                        UserTable.select(where).apply(configure).toUserTableFullDtoList()
+                        UserTable.select{where(UserTable)}.apply{configure(UserTable)}.toUserTableFullDtoList()
                       } else {
-                        UserTable.selectAll().apply(configure).toUserTableFullDtoList()
+                        UserTable.selectAll().apply{configure(UserTable)}.toUserTableFullDtoList()
                       }
                     }
                   }
 
-                  public fun findOne(`where`: SqlExpressionBuilder.() -> Op<Boolean>): UserTableFullDto? {
+                  public fun findOne(`where`: SqlExpressionBuilder.(table: UserTable) -> Op<Boolean>):
+                      UserTableFullDto? {
 
                     return find(where = where).singleOrNull()
                   }

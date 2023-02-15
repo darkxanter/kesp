@@ -104,7 +104,7 @@ internal inline fun createConstructor(
 internal inline fun createParameter(
     name: String,
     type: TypeName,
-    crossinline builder: ParameterSpec.Builder.() -> Unit,
+    crossinline builder: ParameterSpec.Builder.() -> Unit = {},
 ): ParameterSpec = ParameterSpec.builder(name, type).apply(builder).build()
 
 internal fun FunSpec.Builder.addParameter(

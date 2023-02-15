@@ -66,10 +66,18 @@ fun main() {
 
         printDivider()
         println(userRepository.find())
+        println(userRepository.find({ table ->
+            orderBy(table.id)
+        }) { table ->
+            table.id eq userId
+        })
         printDivider()
         println(userRepository.findUserDto())
         printDivider()
         println(articleRepository.find())
+        println(articleRepository.find {
+            it.authorId eq userId
+        })
         printDivider()
         println(articleTagRepository.find())
         printDivider()
