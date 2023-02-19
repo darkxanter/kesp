@@ -13,6 +13,6 @@ internal data class ColumnDefinition(
 //    val hasClientDefault: Boolean = false,
     val docString: String? = null,
 ) {
-    val className = type.unwrapEntityId().toClassName()
+    val className = type.unwrapEntityId().toClassName().copy(nullable = type.isMarkedNullable)
     val isEntityId = type.isMatched("org.jetbrains.exposed.dao.id.EntityID")
 }

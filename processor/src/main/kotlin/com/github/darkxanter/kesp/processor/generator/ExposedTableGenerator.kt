@@ -59,6 +59,11 @@ internal class ExposedTableGenerator(
                 generateCrudRepository(tableDefinition)
             }
         }
+        if (exposedTable.generateDao) {
+            writeFile(tableDefinition, "${tableDefinition.tableName}Dao") {
+                generateDao(tableDefinition, logger)
+            }
+        }
     }
 
     private inline fun writeFile(

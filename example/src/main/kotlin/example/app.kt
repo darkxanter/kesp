@@ -11,6 +11,7 @@ import example.database.articles.TagTableCreateDto
 import example.database.articles.TagTableRepository
 import example.database.users.UserTable
 import example.database.users.UserTableCreateDto
+import example.database.users.UserTableDao
 import example.database.users.UserTableRepository
 import example.database.users.toUserTableFullDtoList
 import example.dto.UserDto
@@ -27,7 +28,6 @@ import java.sql.Connection
 fun main() {
     Database.connect("jdbc:sqlite:file:test?mode=memory&cache=shared", "org.sqlite.JDBC")
 //    Database.connect("jdbc:sqlite:./example.sqlite", "org.sqlite.JDBC")
-
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
     val userRepository = UserTableRepository()
@@ -78,11 +78,18 @@ fun main() {
         val userAlias = UserTable.alias("user_alias")
         printDivider()
         println(userAlias.selectAll().toUserTableFullDtoList(userAlias))
-        printDivider()
 
+        printDivider()
+        val userDao = UserTableDao.findById(userId)!!
+        println("userDao.password ${userDao.password}")
+        userDao.password = "1234"
+        println("userDao.password ${userDao.password}")
+        userDao.flush()
+
+        printDivider()
         articleRepository.deleteById(articleId)
         tagRepository.deleteById(tagId)
-        userRepository.deleteById(userId)
+        userDao.delete()
     }
 }
 

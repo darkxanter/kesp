@@ -127,6 +127,11 @@ internal inline fun createClass(
     crossinline builder: TypeSpec.Builder.() -> Unit,
 ): TypeSpec = TypeSpec.classBuilder(className).apply(builder).build()
 
+internal inline fun createCompanion(
+    className: String? = null,
+    crossinline builder: TypeSpec.Builder.() -> Unit,
+): TypeSpec = TypeSpec.companionObjectBuilder(className).apply(builder).build()
+
 internal inline fun TypeSpec.Builder.addPrimaryConstructor(
     crossinline builder: FunSpec.Builder.() -> Unit,
 ): TypeSpec.Builder = primaryConstructor(createConstructor(builder))
@@ -141,6 +146,12 @@ internal inline fun TypeSpec.Builder.addFunction(
     name: String,
     crossinline builder: FunSpec.Builder.() -> Unit,
 ): TypeSpec.Builder = addFunction(createFunction(name, builder))
+
+internal inline fun TypeSpec.Builder.addCompanion(
+    name: String? = null,
+    crossinline builder: TypeSpec.Builder.() -> Unit,
+): TypeSpec.Builder = addType(createCompanion(name, builder))
+
 
 // PropertySpec helpers
 
