@@ -11,6 +11,7 @@ import com.github.darkxanter.kesp.processor.helpers.addReturn
 import com.github.darkxanter.kesp.processor.helpers.endControlFlow
 import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STAR
@@ -58,6 +59,15 @@ private fun FileSpec.Builder.generateTableFunctions(
 
     val updateFun = "$tableName.update({$updateWhere})"
 
+    fun CodeBlock.Builder.endControlFlowWithPrimaryKey() {
+        if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
+            endControlFlow(".value")
+        } else {
+            endControlFlow()
+        }
+    }
+
+
     if (tableDefinition.configuration.models) {
         addFunction(tableDefinition.insertDtoFunName) {
             receiver(tableDefinition.tableClassName)
@@ -71,12 +81,7 @@ private fun FileSpec.Builder.generateTableFunctions(
             addCodeBlock {
                 beginControlFlow("$tableName.$insertFun")
                 addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
-
-                if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
-                    endControlFlow(".value")
-                } else {
-                    endControlFlow()
-                }
+                endControlFlowWithPrimaryKey()
             }
         }
     }
@@ -115,11 +120,7 @@ private fun FileSpec.Builder.generateTableFunctions(
             addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.explicitColumns) { column ->
                 CallableParam(column.name, column.name)
             }
-            if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
-                endControlFlow(".value")
-            } else {
-                endControlFlow()
-            }
+            endControlFlowWithPrimaryKey()
         }
     }
 
@@ -232,6 +233,12 @@ private fun FileSpec.Builder.generateReadMappings(
     val aliasClassName = ClassName("org.jetbrains.exposed.sql", "Alias")
         .parameterizedBy(tableDefinition.tableClassName)
 
+    fun unwrapEntityId(column: ColumnDefinition) = when {
+        column.isEntityId && column.isNullable -> "?.value"
+        column.isEntityId -> ".value"
+        else -> ""
+    }
+
     addFunction(functionName) {
         receiver(resultRowClassName)
         returns(dtoClassName)
@@ -239,7 +246,7 @@ private fun FileSpec.Builder.generateReadMappings(
             addReturn()
             addCall(dtoClassName.simpleName, columns) { column ->
                 val name = column.name
-                val unwrap = if (column.isEntityId) ".value" else ""
+                val unwrap = unwrapEntityId(column)
                 CallableParam(name, "this[$tableName.$name]$unwrap")
             }
         }
@@ -255,7 +262,7 @@ private fun FileSpec.Builder.generateReadMappings(
             addReturn()
             addCall(dtoClassName.simpleName, columns) { column ->
                 val name = column.name
-                val unwrap = if (column.isEntityId) ".value" else ""
+                val unwrap = unwrapEntityId(column)
                 CallableParam(name, "this[alias[$tableName.$name]]$unwrap")
             }
         }

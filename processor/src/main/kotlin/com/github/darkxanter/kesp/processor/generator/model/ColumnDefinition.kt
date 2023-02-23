@@ -15,4 +15,5 @@ internal data class ColumnDefinition(
 ) {
     val className = type.unwrapEntityId().toClassName()
     val isEntityId = type.isMatched("org.jetbrains.exposed.dao.id.EntityID")
+    val isNullable = type.isMarkedNullable
 }

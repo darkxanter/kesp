@@ -16,5 +16,5 @@ data class ArticleTitleWithAuthorDto(
     @Contextual
     val id: UUID,
     val title: String,
-    val authorId: Long,
+    val authorId: Long?,
 )

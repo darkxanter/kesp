@@ -22,7 +22,7 @@ object ArticleTable : UUIDTable("articles") {
     val content = text("content")
 
     /** Article author */
-    val authorId = long("author_id").references(UserTable.id, ReferenceOption.CASCADE)
+    val authorId = reference("author_id", UserTable.id, ReferenceOption.CASCADE).nullable()
 
     @GeneratedValue
     val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
