@@ -52,7 +52,7 @@ fun main() {
 
         val userId = userRepository.create(dto)
 
-        userRepository.updateUserDto(userId, UserDto(userId, "another"))
+        userRepository.updateIUser(userId, UserDto(userId, "another"))
 
         val tagId = tagRepository.create(TagTableCreateDto("example"))
         tagRepository.update(tagId, TagTableCreateDto("Example"))

@@ -187,7 +187,7 @@ private fun FileSpec.Builder.generateMappingFunctions(
         generateReadMappings(tableDefinition.fullDtoClassName, tableDefinition.allColumns, tableDefinition)
     }
 
-    tableDefinition.projections.forEach { projection ->
+    tableDefinition.projections.filter { it.readFunction }.forEach { projection ->
         generateReadMappings(projection.className, projection.columns, tableDefinition)
     }
 

@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.ksp.toClassName
 internal data class ProjectionDefinition(
     val type: KSType,
     val columns: List<ColumnDefinition>,
+    val readFunction: Boolean,
     val updateFunction: Boolean,
 ) {
     val className = type.toClassName()

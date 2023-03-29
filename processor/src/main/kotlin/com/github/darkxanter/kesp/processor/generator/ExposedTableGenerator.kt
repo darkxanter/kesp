@@ -19,6 +19,7 @@ import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSVisitorVoid
@@ -111,33 +112,32 @@ internal class ExposedTableGenerator(
 
     data class ProjectionConfig(
         val type: KSType,
+        val readFunction: Boolean,
         val updateFunction: Boolean,
     )
 
     private fun getProjections(classDeclaration: KSClassDeclaration): Sequence<ProjectionConfig> {
-        val projections = classDeclaration.filterAnnotations(Projection::class)
-            .map { annotation ->
-                logger.info("annotation ${annotation.arguments}")
+        val projections = classDeclaration.filterAnnotations(Projection::class).map { annotation ->
+            logger.info("annotation ${annotation.arguments}")
 
-                val type = annotation.arguments.find {
-                    it.name?.asString() == Projection::dataClass.name
-                }?.value as? KSType ?: logger.panic("couldn't cast dataClass to KSType", annotation)
+            val type = annotation.arguments.find {
+                it.name?.asString() == Projection::dataClass.name
+            }?.value as? KSType ?: logger.panic("couldn't cast dataClass to KSType", annotation)
 
-                val updateFunction = annotation.arguments.find {
-                    it.name?.asString() == Projection::updateFunction.name
-                }?.value as? Boolean ?: false
+            val readFunction = annotation.arguments.find {
+                it.name?.asString() == Projection::readFunction.name
+            }?.value as? Boolean ?: true
 
-                ProjectionConfig(
-                    type = type,
-                    updateFunction = updateFunction,
-                )
-            }
-//        val multipleProjections = classDeclaration.filterAnnotations(Projections::class)
-//            .mapNotNull {
-//                it.arguments.firstOrNull()?.value as? List<*>
-//            }
-//            .flatten()
-//            .filterIsInstance<KSType>()
+            val updateFunction = annotation.arguments.find {
+                it.name?.asString() == Projection::updateFunction.name
+            }?.value as? Boolean ?: false
+
+            ProjectionConfig(
+                type = type,
+                readFunction = readFunction,
+                updateFunction = updateFunction,
+            )
+        }
         return projections.distinctBy { it.type }
     }
 
@@ -149,31 +149,44 @@ internal class ExposedTableGenerator(
 
             logger.info("projection $projection")
 
+            val className = projection.type.declaration.qualifiedName?.asString()
+
             val projectionDeclaration = projection.type.declaration as? KSClassDeclaration
                 ?: logger.panic(
-                    "${projection.type.declaration.qualifiedName} is not class",
+                    "$className is not class",
                     projection.type.declaration
                 )
-            val primaryConstructor = projectionDeclaration.primaryConstructor
-                ?: logger.panic(
-                    "${projectionDeclaration.qualifiedName} doesn't have primary constructor",
-                    projectionDeclaration
-                )
-            val parameters = primaryConstructor.parameters.mapNotNull { parameter ->
-                val column = columns.find { it.name == parameter.name?.asString() }
-                if (column == null && !parameter.hasDefault) {
-                    logger.panic(
-                        "${projectionDeclaration.qualifiedName} parameter $parameter doesn't exists " +
-                            "in ${classDeclaration.simpleName.asString()} or has default value",
+
+            val isInterface = projectionDeclaration.classKind == ClassKind.INTERFACE
+
+            val projectionColumns = if (isInterface) {
+                projectionDeclaration.getAllProperties().mapNotNull { property ->
+                    columns.find { it.name == property.simpleName.asString() }
+                }.toList()
+            } else {
+                val primaryConstructor = projectionDeclaration.primaryConstructor
+                    ?: logger.panic(
+                        "$className doesn't have a primary constructor",
                         projectionDeclaration
                     )
+                primaryConstructor.parameters.mapNotNull { parameter ->
+                    val column = columns.find { it.name == parameter.name?.asString() }
+                    if (column == null && !parameter.hasDefault) {
+                        logger.panic(
+                            "$className parameter $parameter doesn't exists " +
+                                "in ${classDeclaration.simpleName.asString()} or has default value",
+                            projectionDeclaration
+                        )
+                    }
+                    column
                 }
-                column
             }
+
             ProjectionDefinition(
                 type = projection.type,
-                columns = parameters,
-                updateFunction = projection.updateFunction,
+                columns = projectionColumns,
+                readFunction = if (isInterface) false else projection.readFunction,
+                updateFunction = if (isInterface) true else projection.updateFunction,
             )
         }.toList()
     }

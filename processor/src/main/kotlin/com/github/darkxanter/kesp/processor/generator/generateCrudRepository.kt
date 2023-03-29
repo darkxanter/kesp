@@ -77,7 +77,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                 )
             }
 
-            tableDefinition.projections.forEach { projection ->
+            tableDefinition.projections.filter { it.readFunction }.forEach { projection ->
                 addFindFunction(
                     name = "find${projection.className.simpleName}",
                     tableName = tableName,
