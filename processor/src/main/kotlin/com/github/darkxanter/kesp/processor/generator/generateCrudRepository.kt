@@ -1,5 +1,6 @@
 package com.github.darkxanter.kesp.processor.generator
 
+import com.github.darkxanter.kesp.processor.extensions.panic
 import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
 import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
 import com.github.darkxanter.kesp.processor.helpers.addClass
@@ -8,6 +9,7 @@ import com.github.darkxanter.kesp.processor.helpers.addFunction
 import com.github.darkxanter.kesp.processor.helpers.addParameter
 import com.github.darkxanter.kesp.processor.helpers.addReturn
 import com.github.darkxanter.kesp.processor.helpers.createParameter
+import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -38,7 +40,7 @@ private fun queryTypeName(tableTypeName: TypeName) = LambdaTypeName.get(
     )
 )
 
-internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefinition) {
+internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefinition, logger: KSPLogger) {
     val tableName = tableDefinition.tableName
     val tableTypeName = tableDefinition.tableClassName
 
@@ -46,6 +48,10 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
     addImport("org.jetbrains.exposed.sql.transactions", "transaction")
     addImport("org.jetbrains.exposed.sql", "selectAll", "select", "deleteWhere", "and")
     addImport("org.jetbrains.exposed.sql.SqlExpressionBuilder", "eq")
+
+    if (tableDefinition.primaryKey.isEmpty()) {
+        logger.panic("Primary key not specified for table ${tableDefinition.tableName}", tableDefinition.declaration)
+    }
 
     val whereBlock = buildCodeBlock {
         tableDefinition.primaryKey.first().let {

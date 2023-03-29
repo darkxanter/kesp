@@ -56,7 +56,7 @@ internal class ExposedTableGenerator(
         }
         if (exposedTable.crudRepository) {
             writeFile(tableDefinition, "${tableDefinition.tableName}Repository") {
-                generateCrudRepository(tableDefinition)
+                generateCrudRepository(tableDefinition, logger)
             }
         }
     }
@@ -79,11 +79,7 @@ internal class ExposedTableGenerator(
     @OptIn(KspExperimental::class)
     private fun getTableColumns(classDeclaration: KSClassDeclaration): List<ColumnDefinition> {
         val isDefaultExposedTable = classDeclaration.getAllSuperTypes().any {
-            it.isMatched(
-                "org.jetbrains.exposed.dao.id.IntIdTable",
-                "org.jetbrains.exposed.dao.id.LongIdTable",
-                "org.jetbrains.exposed.dao.id.UUIDTable",
-            )
+            it.isMatched("org.jetbrains.exposed.dao.id.IdTable")
         }
 
         return classDeclaration.getAllProperties().filter {

@@ -1,5 +1,6 @@
 val exposedVersion: String by project
 val sqliteVersion: String by project
+val postgresqlVersion: String by project
 val kdatamapperVersion: String by project
 val kotlinxSerializationVersion: String by project
 
@@ -23,6 +24,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
 
     implementation("org.xerial:sqlite-jdbc:$sqliteVersion")
+    implementation("org.postgresql:postgresql:$postgresqlVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
