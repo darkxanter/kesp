@@ -171,7 +171,7 @@ internal class ExposedTableGenerator(
                     )
                 primaryConstructor.parameters.mapNotNull { parameter ->
                     val column = columns.find { it.name == parameter.name?.asString() }
-                    if (column == null && !parameter.hasDefault) {
+                    if (column == null && !parameter.hasDefault && projection.readFunction) {
                         logger.panic(
                             "$className parameter $parameter doesn't exists " +
                                 "in ${classDeclaration.simpleName.asString()} or has default value",
