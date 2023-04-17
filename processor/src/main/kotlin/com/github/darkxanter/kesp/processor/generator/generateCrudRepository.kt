@@ -123,6 +123,17 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                         addStatement("$tableName.${tableDefinition.insertDtoFunName}(dto)")
                     }
                 }
+
+                addFunction("createMultiple") {
+                    addParameter("dtos", Iterable::class.asClassName().parameterizedBy(tableDefinition.createInterfaceClassName))
+                    tableDefinition.primaryKey.singleOrNull()?.let {
+                        returns(List::class.asClassName().parameterizedBy(it.className))
+                        addReturn()
+                    }
+                    transactionBlock {
+                        addStatement("$tableName.${tableDefinition.batchInsertDtoFunName}(dtos)")
+                    }
+                }
             }
 
             if (tableDefinition.hasUpdateFun) {
