@@ -37,6 +37,7 @@ private fun FileSpec.Builder.generateTableFunctions(
 
     addImport(
         "org.jetbrains.exposed.sql",
+        "batchInsert",
         if (primaryKey.size == 1) "insertAndGetId" else "insert",
         "update"
     )
@@ -67,8 +68,32 @@ private fun FileSpec.Builder.generateTableFunctions(
         }
     }
 
+    fun CodeBlock.Builder.endControlFlowWithListOfPrimaryKeys() {
+        if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
+            endControlFlow(".map { it[$tableName.${primaryKey.first().name}].value }")
+        } else {
+            endControlFlow()
+        }
+    }
+
 
     if (tableDefinition.configuration.models) {
+        addFunction(tableDefinition.batchInsertDtoFunName) {
+            receiver(tableDefinition.tableClassName)
+            addParameter("dtos", Iterable::class.asClassName().parameterizedBy(interfaceClassName))
+
+            primaryKey.singleOrNull()?.let {
+                returns(List::class.asClassName().parameterizedBy(it.className))
+                addReturn()
+            }
+
+            addCodeBlock {
+                beginControlFlow("$tableName.batchInsert(dtos)")
+                addStatement("this.$MAPPING_FROM_FUN_NAME(it)")
+                endControlFlowWithListOfPrimaryKeys()
+            }
+        }
+
         addFunction(tableDefinition.insertDtoFunName) {
             receiver(tableDefinition.tableClassName)
             addParameter("dto", interfaceClassName)

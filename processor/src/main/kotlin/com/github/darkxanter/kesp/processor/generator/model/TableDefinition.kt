@@ -32,6 +32,7 @@ internal data class TableDefinition(
     val fullDtoClassName = declaration.toClassName("${tableName}FullDto")
     val repositoryClassName = declaration.toClassName("${tableName}Repository")
 
+    val batchInsertDtoFunName = "batchInsertDtos"
     val insertDtoFunName = "insertDto"
     val updateDtoFunName = "updateDto"
     val toDtoFunName = "to${fullDtoClassName.simpleName}"

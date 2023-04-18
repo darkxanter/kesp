@@ -108,9 +108,15 @@ class SimpleTest : BaseKspTest() {
             import kotlin.collections.List
             import org.jetbrains.exposed.sql.Alias
             import org.jetbrains.exposed.sql.ResultRow
+            import org.jetbrains.exposed.sql.batchInsert
             import org.jetbrains.exposed.sql.insertAndGetId
             import org.jetbrains.exposed.sql.statements.UpdateBuilder
             import org.jetbrains.exposed.sql.update
+
+            public fun UserTable.batchInsertDtos(dtos: Iterable<UserTableCreate>): List<Long> =
+                UserTable.batchInsert(dtos) {
+              this.fromDto(it)
+            }.map { it[UserTable.id].value }
 
             public fun UserTable.insertDto(dto: UserTableCreate): Long = UserTable.insertAndGetId {
               it.fromDto(dto)
@@ -308,6 +314,7 @@ class SimpleTest : BaseKspTest() {
                 import kotlin.Long
                 import kotlin.Suppress
                 import kotlin.Unit
+                import kotlin.collections.Iterable
                 import kotlin.collections.List
                 import org.jetbrains.exposed.sql.ISqlExpressionBuilder
                 import org.jetbrains.exposed.sql.Op
@@ -349,6 +356,10 @@ class SimpleTest : BaseKspTest() {
 
                   public fun create(dto: UserTableCreate): Long = transaction {
                     UserTable.insertDto(dto)
+                  }
+
+                  public fun createMultiple(dtos: Iterable<UserTableCreate>): List<Long> = transaction {
+                    UserTable.batchInsertDtos(dtos)
                   }
 
                   public fun update(id: Long, dto: UserTableCreate): Int = transaction {
@@ -412,6 +423,7 @@ class SimpleTest : BaseKspTest() {
         repository shouldHaveFunction "findOne"
         repository shouldHaveFunction "findById"
         repository shouldHaveFunction "create"
+        repository shouldHaveFunction "createMultiple"
         repository shouldHaveFunction "update"
         repository shouldHaveFunction "deleteById"
         repository shouldHaveFunction "delete"
