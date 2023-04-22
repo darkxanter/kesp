@@ -1,10 +1,10 @@
-package example.database.users
+package example.basic.database
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.annotation.GeneratedValue
 import com.github.darkxanter.kesp.annotation.Projection
-import example.dto.IUser
-import example.dto.UserDto
+import example.basic.dto.IUser
+import example.basic.dto.UserDto
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.javatime.CurrentTimestamp
 import org.jetbrains.exposed.sql.javatime.date
@@ -12,7 +12,7 @@ import org.jetbrains.exposed.sql.javatime.timestamp
 
 /** User account */
 @ExposedTable
-@Projection(UserDto::class)
+@Projection(UserDto::class, updateFunction = true)
 @Projection(IUser::class)
 object UserTable : LongIdTable("users") {
     /**

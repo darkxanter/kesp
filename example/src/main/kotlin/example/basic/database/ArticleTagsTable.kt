@@ -1,4 +1,4 @@
-package example.database.articles
+package example.basic.database
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.annotation.Id

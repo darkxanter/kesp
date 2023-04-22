@@ -1,11 +1,10 @@
-package example.database.articles
+package example.basic.database
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.annotation.GeneratedValue
 import com.github.darkxanter.kesp.annotation.Projection
-import example.database.users.UserTable
-import example.dto.ArticleTitleDto
-import example.dto.ArticleTitleWithAuthorDto
+import example.basic.dto.ArticleTitleDto
+import example.basic.dto.ArticleTitleWithAuthorDto
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.javatime.CurrentTimestamp

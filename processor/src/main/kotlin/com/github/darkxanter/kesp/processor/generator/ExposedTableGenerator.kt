@@ -60,6 +60,13 @@ internal class ExposedTableGenerator(
                 generateCrudRepository(tableDefinition, logger)
             }
         }
+        if (exposedTable.generateDao) {
+//            val foreignKeys = getForeignKeys(classDeclaration)
+
+            writeFile(tableDefinition, "${tableDefinition.tableName}Dao") {
+                generateDao(tableDefinition, /*foreignKeys,*/ logger)
+            }
+        }
     }
 
     private inline fun writeFile(
@@ -85,25 +92,35 @@ internal class ExposedTableGenerator(
 
         return classDeclaration.getAllProperties().filter {
             it.simpleName.asString() != "autoIncColumn"
-        }.mapNotNull {
-            val columnType = it.type.resolve()
+        }.mapNotNull { declaration ->
+            val columnType = declaration.type.resolve()
             if (!columnType.isMatched("org.jetbrains.exposed.sql.Column")) {
                 return@mapNotNull null
             }
-            val columnName = it.simpleName.asString()
+            val columnName = declaration.simpleName.asString()
 
             val isGeneratedColumn = isDefaultExposedTable && columnName == "id"
-                || it.getAnnotationsByType(GeneratedValue::class).isEmpty().not()
+                || declaration.getAnnotationsByType(GeneratedValue::class).isEmpty().not()
 
             val isPrimaryKey = isDefaultExposedTable && columnName == "id"
-                || it.getAnnotationsByType(Id::class).isEmpty().not()
+                || declaration.getAnnotationsByType(Id::class).isEmpty().not()
+
+//            val foreignKey = declaration.filterAnnotations(ForeignKey::class).firstOrNull()?.let { annotation ->
+//                ForeignKeyDefinition(
+//                    table = annotation.getValue(ForeignKey::table),
+//                    dao = annotation.getValue(ForeignKey::dao),
+//                    targetColumn = annotation.getValue(ForeignKey::column),
+//                    sourceColumn = classDeclaration.simpleName.asString(),
+//                )
+//            }
+//            logger.info("foreignKey $foreignKey")
 
             ColumnDefinition(
                 name = columnName,
                 type = columnType.getFirstArgumentType(),
                 generated = isGeneratedColumn,
                 primaryKey = isPrimaryKey,
-                docString = it.docString,
+                docString = declaration.docString,
             )
         }.sortedBy {
             if (it.name == "id") 0 else 1
@@ -190,4 +207,16 @@ internal class ExposedTableGenerator(
             )
         }.toList()
     }
+
+
+//    private fun getForeignKeys(classDeclaration: KSClassDeclaration): List<ForeignKeyDefinition> {
+//        return classDeclaration.filterAnnotations(ForeignKey::class).map { annotation ->
+//            ForeignKeyDefinition(
+//                table = annotation.getValue(ForeignKey::table),
+//                dao = annotation.getValue(ForeignKey::dao),
+//                targetColumn = annotation.getValue(ForeignKey::column),
+//                sourceColumn = classDeclaration.simpleName.asString(),
+//            )
+//        }.toList()
+//    }
 }

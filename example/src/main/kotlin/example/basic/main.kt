@@ -1,19 +1,19 @@
-package example
+package example.basic
 
-import example.database.articles.ArticleTable
-import example.database.articles.ArticleTableCreateDto
-import example.database.articles.ArticleTableRepository
-import example.database.articles.ArticleTagsTable
-import example.database.articles.ArticleTagsTableCreateDto
-import example.database.articles.ArticleTagsTableRepository
-import example.database.articles.TagTable
-import example.database.articles.TagTableCreateDto
-import example.database.articles.TagTableRepository
-import example.database.users.UserTable
-import example.database.users.UserTableCreateDto
-import example.database.users.UserTableRepository
-import example.database.users.toUserTableFullDtoList
-import example.dto.UserDto
+import example.basic.database.ArticleTable
+import example.basic.database.ArticleTableCreateDto
+import example.basic.database.ArticleTableRepository
+import example.basic.database.ArticleTagsTable
+import example.basic.database.ArticleTagsTableCreateDto
+import example.basic.database.ArticleTagsTableRepository
+import example.basic.database.TagTable
+import example.basic.database.TagTableCreateDto
+import example.basic.database.TagTableRepository
+import example.basic.database.UserTable
+import example.basic.database.UserTableCreateDto
+import example.basic.database.UserTableRepository
+import example.basic.database.toUserTableFullDtoList
+import example.basic.dto.UserDto
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -27,7 +27,6 @@ import java.sql.Connection
 fun main() {
     Database.connect("jdbc:sqlite:file:test?mode=memory&cache=shared", "org.sqlite.JDBC")
 //    Database.connect("jdbc:sqlite:./example.sqlite", "org.sqlite.JDBC")
-
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
     val userRepository = UserTableRepository()
@@ -86,8 +85,8 @@ fun main() {
         val userAlias = UserTable.alias("user_alias")
         printDivider()
         println(userAlias.selectAll().toUserTableFullDtoList(userAlias))
-        printDivider()
 
+        printDivider()
         articleRepository.deleteById(articleId)
         tagRepository.deleteById(tagId)
         userRepository.deleteById(userId)
