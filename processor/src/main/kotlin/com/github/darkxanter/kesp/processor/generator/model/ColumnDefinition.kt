@@ -3,7 +3,6 @@ package com.github.darkxanter.kesp.processor.generator.model
 import com.github.darkxanter.kesp.processor.extensions.isMatched
 import com.github.darkxanter.kesp.processor.extensions.unwrapEntityId
 import com.google.devtools.ksp.symbol.KSType
-import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 
 internal data class ColumnDefinition(
