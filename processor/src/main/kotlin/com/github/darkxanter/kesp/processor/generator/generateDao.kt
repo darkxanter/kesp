@@ -11,6 +11,7 @@ import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toTypeName
 
@@ -43,17 +44,14 @@ internal fun FileSpec.Builder.generateDao(
     addImport("org.jetbrains.exposed.dao", "Entity", "EntityClass")
     addImport("org.jetbrains.exposed.dao.id", "EntityID")
 
-    addClass(tableDefinition.daoClassName) {
+    addClass(tableDefinition.daoBaseClassName) {
+        modifiers.add(KModifier.ABSTRACT)
+
         addPrimaryConstructor {
             addParameter("id", entityId)
         }
         superclass(entity)
         addSuperclassConstructorParameter("%L", "id")
-
-        addCompanion {
-            superclass(entityClass)
-            addSuperclassConstructorParameter("%T", tableDefinition.tableClassName)
-        }
 
         // add own columns
         tableDefinition.allColumns.filter { it.name != "id" }.forEach { column ->
@@ -61,6 +59,19 @@ internal fun FileSpec.Builder.generateDao(
                 mutable(!column.generated)
                 delegate("%T.%L", tableDefinition.tableClassName, column.name)
             }
+        }
+    }
+
+    addClass(tableDefinition.daoClassName) {
+        addPrimaryConstructor {
+            addParameter("id", entityId)
+        }
+        superclass(tableDefinition.daoBaseClassName)
+        addSuperclassConstructorParameter("%L", "id")
+
+        addCompanion {
+            superclass(entityClass)
+            addSuperclassConstructorParameter("%T", tableDefinition.tableClassName)
         }
         // add references
 //        foreignKeys.forEach { foreignKey ->

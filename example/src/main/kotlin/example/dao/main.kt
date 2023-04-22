@@ -20,10 +20,13 @@ fun main() {
             username = "test"
         }
 
-        println("id ${userDao.id}")
+        ArticleDao.new {
+            this.user = userDao
+            this.title = "Test Title"
+        }
 
-        val userDao2 = UserTableDao.findById(userDao.id)
-        println("username ${userDao2?.username}")
-
+        ArticleDao.all().forEach {
+            println("title '${it.title}' username '${it.user.username}'")
+        }
     }
 }
