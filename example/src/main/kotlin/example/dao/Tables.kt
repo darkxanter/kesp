@@ -14,10 +14,11 @@ object ArticleTable : IntIdTable() {
 
 @ExposedTable(generateDao = true)
 object CommentTable : IntIdTable() {
-    @ForeignKey(ArticleTable::class)
-    val articleId = reference("article_id", ArticleTable)
+    /** Annotation [ForeignKey] is not required if column type is simple `Column<Int>` */
+    val articleId = integer("article_id").references(ArticleTable.id)
     val message = text("message")
 
+    /** Annotation [ForeignKey] is required if column type is `Column<Entity<*>>` */
     @ForeignKey(UserTable::class)
     val userId = reference("user_id", UserTable)
 }

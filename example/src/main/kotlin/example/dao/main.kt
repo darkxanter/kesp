@@ -20,7 +20,7 @@ fun main() {
             username = "test"
         }
 
-        ArticleDao.new {
+        val article = ArticleDao.new {
             fromDto(ArticleTableCreateDto(
                 title = "Test Title",
                 userId = userDao.id.value
@@ -29,6 +29,18 @@ fun main() {
 
         ArticleDao.all().forEach {
             println("title '${it.title}' username '${it.user.username}'")
+        }
+
+        CommentTableDao.new {
+            fromDto(CommentTableCreateDto(
+                articleId = article.id.value,
+                message = "Hi!",
+                userId = userDao.id.value,
+            ))
+        }
+
+        CommentTableDao.all().forEach {
+            println("articleId ${it.articleId} userId ${it.userId} message '${it.message}'")
         }
     }
 }
