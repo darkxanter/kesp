@@ -12,9 +12,16 @@ internal data class ColumnDefinition(
     val primaryKey: Boolean = false,
 //    val hasClientDefault: Boolean = false,
     val docString: String? = null,
+    val foreignTable: KSType? = null,
 ) {
     val sourceClassName = type.toTypeName()
     val className = type.unwrapEntityId().toTypeName().copy(nullable = type.isMarkedNullable)
     val isEntityId = type.isMatched("org.jetbrains.exposed.dao.id.EntityID")
     val isNullable = type.isMarkedNullable
+
+    val unwrapEntityId = when {
+        isEntityId && isNullable -> "?.value"
+        isEntityId -> ".value"
+        else -> ""
+    }
 }

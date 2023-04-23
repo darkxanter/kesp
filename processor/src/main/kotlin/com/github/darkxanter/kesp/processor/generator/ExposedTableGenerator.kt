@@ -1,12 +1,14 @@
 package com.github.darkxanter.kesp.processor.generator
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
+import com.github.darkxanter.kesp.annotation.ForeignKey
 import com.github.darkxanter.kesp.annotation.GeneratedValue
 import com.github.darkxanter.kesp.annotation.Id
 import com.github.darkxanter.kesp.annotation.Projection
 import com.github.darkxanter.kesp.processor.Configuration
 import com.github.darkxanter.kesp.processor.extensions.filterAnnotations
 import com.github.darkxanter.kesp.processor.extensions.getFirstArgumentType
+import com.github.darkxanter.kesp.processor.extensions.getValue
 import com.github.darkxanter.kesp.processor.extensions.isEmpty
 import com.github.darkxanter.kesp.processor.extensions.isMatched
 import com.github.darkxanter.kesp.processor.extensions.panic
@@ -105,14 +107,10 @@ internal class ExposedTableGenerator(
             val isPrimaryKey = isDefaultExposedTable && columnName == "id"
                 || declaration.getAnnotationsByType(Id::class).isEmpty().not()
 
-//            val foreignKey = declaration.filterAnnotations(ForeignKey::class).firstOrNull()?.let { annotation ->
-//                ForeignKeyDefinition(
-//                    table = annotation.getValue(ForeignKey::table),
-//                    dao = annotation.getValue(ForeignKey::dao),
-//                    targetColumn = annotation.getValue(ForeignKey::column),
-//                    sourceColumn = classDeclaration.simpleName.asString(),
-//                )
-//            }
+
+            val foreignKey = declaration.filterAnnotations(ForeignKey::class).firstOrNull()?.let { annotation ->
+                annotation.getValue<KSType>(ForeignKey::table)
+            }
 //            logger.info("foreignKey $foreignKey")
 
             ColumnDefinition(
@@ -121,6 +119,7 @@ internal class ExposedTableGenerator(
                 generated = isGeneratedColumn,
                 primaryKey = isPrimaryKey,
                 docString = declaration.docString,
+                foreignTable = foreignKey,
             )
         }.sortedBy {
             if (it.name == "id") 0 else 1

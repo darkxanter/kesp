@@ -21,8 +21,10 @@ fun main() {
         }
 
         ArticleDao.new {
-            this.user = userDao
-            this.title = "Test Title"
+            fromDto(ArticleTableCreateDto(
+                title = "Test Title",
+                userId = userDao.id.value
+            ))
         }
 
         ArticleDao.all().forEach {
