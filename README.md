@@ -7,13 +7,14 @@ It generates for you DTOs, table mappings and a CRUD repository for an Exposed t
 
 
 <!-- TOC -->
-* [Features](#features)
-* [Annotations](#annotations)
-* [How to use](#how-to-use)
-  * [Basic example](#basic-example)
-  * [Projection example](#projection-example)
-  * [DAO example](#dao-example)
-* [Setup](#setup)
+* [Kesp](#kesp)
+  * [Features](#features)
+  * [Annotations](#annotations)
+  * [How to use](#how-to-use)
+    * [Basic example](#basic-example)
+    * [Projection example](#projection-example)
+    * [DAO example](#dao-example)
+  * [Setup](#setup)
 * [License](#license)
 <!-- TOC -->
 
