@@ -9,43 +9,43 @@ import org.jetbrains.exposed.sql.UUIDColumnType
 import java.sql.ResultSet
 import kotlin.reflect.KClass
 
-public interface ValueId<T : Comparable<T>> : Comparable<ValueId<T>> {
-    public val value: T
+interface ValueId<T : Comparable<T>> : Comparable<ValueId<T>> {
+    val value: T
 
     override fun compareTo(other: ValueId<T>): Int = value.compareTo(other.value)
 }
 
-public inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> Column<TValue>.valueId(
+inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> Column<TValue>.valueId(
     noinline createWrapper: (TValue) -> TWrapperClass,
 ): Column<TWrapperClass> = wrapperClass(createWrapper) { it.value }
 
-public fun <TValue : Comparable<TValue>, TWrapperClass : ValueId<TValue>> Column<TValue>.valueId(
+fun <TValue : Comparable<TValue>, TWrapperClass : ValueId<TValue>> Column<TValue>.valueId(
     createWrapper: (TValue) -> TWrapperClass,
     wrapperClass: KClass<TWrapperClass>,
 ): Column<TWrapperClass> = wrapperClass(createWrapper, { it.value }, wrapperClass)
 
-public inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueIdColumnType(
+inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueIdColumnType(
     columnType: IColumnType,
     noinline createWrapper: (TValue) -> TWrapperClass,
 ): WrapperColumnType<TValue, TWrapperClass> = wrapperColumnType(columnType, createWrapper) { it.value }
 
-public inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueLongIdColumnType(
+inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueLongIdColumnType(
     noinline createWrapper: (TValue) -> TWrapperClass,
 ): WrapperColumnType<TValue, TWrapperClass> = valueIdColumnType(LongColumnType(), createWrapper)
 
-public inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueIntIdColumnType(
+inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueIntIdColumnType(
     noinline createWrapper: (TValue) -> TWrapperClass,
 ): WrapperColumnType<TValue, TWrapperClass> = valueIdColumnType(IntegerColumnType(), createWrapper)
 
-public inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueUUIDColumnType(
+inline fun <reified TValue : Comparable<TValue>, reified TWrapperClass : ValueId<TValue>> valueUUIDColumnType(
     noinline createWrapper: (TValue) -> TWrapperClass,
 ): WrapperColumnType<TValue, TWrapperClass> = valueIdColumnType(UUIDColumnType(), createWrapper)
 
-public class WrapperColumnType<TValue : Any, TWrapperClass : Any>(
-    public val columnType: IColumnType,
-    public val createWrapper: (TValue) -> TWrapperClass,
-    public val readValue: (TWrapperClass) -> TValue,
-    public val wrapperClass: KClass<TWrapperClass>,
+class WrapperColumnType<TValue : Any, TWrapperClass : Any>(
+    val columnType: IColumnType,
+    val createWrapper: (TValue) -> TWrapperClass,
+    val readValue: (TWrapperClass) -> TValue,
+    val wrapperClass: KClass<TWrapperClass>,
 ) : ColumnType() {
     override fun sqlType(): String = columnType.sqlType()
 
@@ -91,14 +91,14 @@ public class WrapperColumnType<TValue : Any, TWrapperClass : Any>(
     }
 }
 
-public inline fun <reified TValue : Any, reified TWrapperClass : Any> Column<TValue>.wrapperClass(
+inline fun <reified TValue : Any, reified TWrapperClass : Any> Column<TValue>.wrapperClass(
     noinline createWrapper: (TValue) -> TWrapperClass,
     noinline readValue: (TWrapperClass) -> TValue,
 ): Column<TWrapperClass> {
     return wrapperClass(createWrapper, readValue, TWrapperClass::class)
 }
 
-public fun <TValue : Any, TWrapperClass : Any> Column<TValue>.wrapperClass(
+fun <TValue : Any, TWrapperClass : Any> Column<TValue>.wrapperClass(
     createWrapper: (TValue) -> TWrapperClass,
     readValue: (TWrapperClass) -> TValue,
     wrapperClass: KClass<TWrapperClass>,
@@ -118,7 +118,7 @@ public fun <TValue : Any, TWrapperClass : Any> Column<TValue>.wrapperClass(
     return table.replaceColumn(this, newColumn)
 }
 
-public inline fun <reified TValue : Any, reified TWrapperClass : Any> wrapperColumnType(
+inline fun <reified TValue : Any, reified TWrapperClass : Any> wrapperColumnType(
     columnType: IColumnType,
     noinline createWrapper: (TValue) -> TWrapperClass,
     noinline readValue: (TWrapperClass) -> TValue,

@@ -17,7 +17,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.asClassName
 
-private const val MAPPING_FROM_FUN_NAME = "fromDto"
 private val resultRowClassName = ClassName("org.jetbrains.exposed.sql", "ResultRow")
 
 internal fun FileSpec.Builder.generateTableFunctions(tableDefinition: TableDefinition, logger: KSPLogger) {
@@ -258,12 +257,6 @@ private fun FileSpec.Builder.generateReadMappings(
     val aliasClassName = ClassName("org.jetbrains.exposed.sql", "Alias")
         .parameterizedBy(tableDefinition.tableClassName)
 
-    fun unwrapEntityId(column: ColumnDefinition) = when {
-        column.isEntityId && column.isNullable -> "?.value"
-        column.isEntityId -> ".value"
-        else -> ""
-    }
-
     addFunction(functionName) {
         receiver(resultRowClassName)
         returns(dtoClassName)
@@ -271,8 +264,7 @@ private fun FileSpec.Builder.generateReadMappings(
             addReturn()
             addCall(dtoClassName.simpleName, columns) { column ->
                 val name = column.name
-                val unwrap = unwrapEntityId(column)
-                CallableParam(name, "this[$tableName.$name]$unwrap")
+                CallableParam(name, "this[$tableName.$name]${column.unwrapEntityId}")
             }
         }
     }
@@ -287,12 +279,10 @@ private fun FileSpec.Builder.generateReadMappings(
             addReturn()
             addCall(dtoClassName.simpleName, columns) { column ->
                 val name = column.name
-                val unwrap = unwrapEntityId(column)
-                CallableParam(name, "this[alias[$tableName.$name]]$unwrap")
+                CallableParam(name, "this[alias[$tableName.$name]]${column.unwrapEntityId}")
             }
         }
     }
-
 
     addFunction(functionListName) {
         receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))

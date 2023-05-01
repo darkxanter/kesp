@@ -127,6 +127,11 @@ internal inline fun createClass(
     crossinline builder: TypeSpec.Builder.() -> Unit,
 ): TypeSpec = TypeSpec.classBuilder(className).apply(builder).build()
 
+internal inline fun createCompanion(
+    className: String? = null,
+    crossinline builder: TypeSpec.Builder.() -> Unit,
+): TypeSpec = TypeSpec.companionObjectBuilder(className).apply(builder).build()
+
 internal inline fun TypeSpec.Builder.addPrimaryConstructor(
     crossinline builder: FunSpec.Builder.() -> Unit,
 ): TypeSpec.Builder = primaryConstructor(createConstructor(builder))
@@ -137,16 +142,34 @@ internal fun TypeSpec.Builder.addProperty(
     builder: PropertySpec.Builder.() -> Unit,
 ): TypeSpec.Builder = addProperty(createProperty(name, type, builder))
 
+internal fun TypeSpec.Builder.addProperty(
+    name: String,
+    type: KClass<*>,
+    builder: PropertySpec.Builder.() -> Unit,
+): TypeSpec.Builder = addProperty(createProperty(name, type, builder))
+
 internal inline fun TypeSpec.Builder.addFunction(
     name: String,
     crossinline builder: FunSpec.Builder.() -> Unit,
 ): TypeSpec.Builder = addFunction(createFunction(name, builder))
+
+internal inline fun TypeSpec.Builder.addCompanion(
+    name: String? = null,
+    crossinline builder: TypeSpec.Builder.() -> Unit,
+): TypeSpec.Builder = addType(createCompanion(name, builder))
+
 
 // PropertySpec helpers
 
 internal fun createProperty(
     name: String,
     type: TypeName,
+    builder: PropertySpec.Builder.() -> Unit,
+) = PropertySpec.builder(name, type).apply(builder).build()
+
+internal fun createProperty(
+    name: String,
+    type: KClass<*>,
     builder: PropertySpec.Builder.() -> Unit,
 ) = PropertySpec.builder(name, type).apply(builder).build()
 

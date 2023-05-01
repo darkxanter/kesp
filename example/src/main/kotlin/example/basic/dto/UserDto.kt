@@ -1,4 +1,4 @@
-package example.dto
+package example.basic.dto
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
