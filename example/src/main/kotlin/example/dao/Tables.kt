@@ -2,7 +2,9 @@ package example.dao
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.annotation.ForeignKey
+import com.github.darkxanter.kesp.annotation.GeneratedValue
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.sql.javatime.timestamp
 
 @ExposedTable(generateDao = true)
 object ArticleTable : IntIdTable() {
@@ -10,6 +12,9 @@ object ArticleTable : IntIdTable() {
 
     @ForeignKey(UserTable::class)
     val userId = reference("user_id", UserTable)
+
+    @GeneratedValue
+    val createdAt = timestamp("created_at")
 }
 
 @ExposedTable(generateDao = true)
