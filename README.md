@@ -598,14 +598,6 @@ dependencies {
 }
 ```
 
-To access generated code from KSP, you need to set up the source path into your module's `build.gradle.kts` file:
-
-```kotlin
-sourceSets.configureEach {
-    kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
-}
-```
-
 To create DTO with the `kotlinx.serialization.Serializable` annotation, add to `build.gradle.kts`:
 
 ```kotlin
@@ -614,6 +606,15 @@ ksp {
 }
 ```
 
+Generated source files are registered automatically since KSP 1.8.0-1.0.9. If you're using KSP 1.0.9 or newer and don't need to make the IDE aware of generated resources, feel free to skip following instructions.
+
+To access generated code from KSP (before 1.8.0-1.0.9), you need to set up the source path into your module's `build.gradle.kts` file:
+
+```kotlin
+sourceSets.configureEach {
+    kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
+}
+```
 ---
 
 License
