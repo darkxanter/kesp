@@ -46,7 +46,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
 
     addImport("org.jetbrains.exposed.sql.transactions", "transaction")
-    addImport("org.jetbrains.exposed.sql", "selectAll", "select", "deleteWhere", "and")
+    addImport("org.jetbrains.exposed.sql", "selectAll", "deleteWhere", "and")
     addImport("org.jetbrains.exposed.sql.SqlExpressionBuilder", "eq")
 
     if (tableDefinition.primaryKey.isEmpty()) {
@@ -228,7 +228,7 @@ private fun TypeSpec.Builder.addFindFunction(
         addReturn()
         transactionBlock {
             beginControlFlow("if (where != null)")
-            addStatement("${tableName}${slice}.select{where($tableName)}.apply{configure($tableName)}.$toFun")
+            addStatement("${tableName}${slice}.selectAll().where{where($tableName)}.apply{configure($tableName)}.$toFun")
             nextControlFlow("else")
             addStatement("${tableName}${slice}.selectAll().apply{configure($tableName)}.$toFun")
             endControlFlow()

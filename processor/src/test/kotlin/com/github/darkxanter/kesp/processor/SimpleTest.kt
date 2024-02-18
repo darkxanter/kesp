@@ -101,7 +101,6 @@ class SimpleTest : BaseKspTest() {
             import kotlin.Int
             import kotlin.Long
             import kotlin.Suppress
-            import kotlin.Unit
             import kotlin.collections.Iterable
             import kotlin.collections.List
             import org.jetbrains.exposed.sql.Alias
@@ -151,7 +150,7 @@ class SimpleTest : BaseKspTest() {
               it.toUserTableFullDto(alias)
             }
 
-            public fun UpdateBuilder<*>.fromDto(dto: UserTableCreate): Unit {
+            public fun UpdateBuilder<*>.fromDto(dto: UserTableCreate) {
               this[UserTable.username] = dto.username
               this[UserTable.password] = dto.password
               this[UserTable.birthDate] = dto.birthDate
@@ -208,15 +207,15 @@ class SimpleTest : BaseKspTest() {
                   /**
                    * Username
                    */
-                  public override val username: String,
+                  override val username: String,
                   /**
                    * User password
                    */
-                  public override val password: String,
+                  override val password: String,
                   /**
                    * Day of birth
                    */
-                  public override val birthDate: LocalDate? = null,
+                  override val birthDate: LocalDate? = null,
                 ) : UserTableCreate
 
                 /**
@@ -235,23 +234,23 @@ class SimpleTest : BaseKspTest() {
                  * User account
                  */
                 public data class UserTableFullDto(
-                  public override val id: Long,
+                  override val id: Long,
                   /**
                    * Username
                    */
-                  public override val username: String,
+                  override val username: String,
                   /**
                    * User password
                    */
-                  public override val password: String,
+                  override val password: String,
                   /**
                    * Day of birth
                    */
-                  public override val birthDate: LocalDate? = null,
+                  override val birthDate: LocalDate? = null,
                   /**
                    * Account creation time
                    */
-                  public override val createdAt: Instant,
+                  override val createdAt: Instant,
                 ) : UserTableFull
             """.trimIndent()
         ),

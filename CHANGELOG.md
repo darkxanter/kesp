@@ -1,3 +1,12 @@
+# 0.12.0
+
+### Breaking changes
+
+The minimum supported version of Exposed is now 0.46.0.
+
+### Improvements
+- Update Kotlin to 1.9.22
+
 # 0.11.0
 
 ### Breaking changes

@@ -82,6 +82,7 @@ internal fun FileSpec.Builder.suppressWarnings() {
             addMember("%S", "MemberVisibilityCanBePrivate")
             addMember("%S", "MatchingDeclarationName")
             addMember("%S", "FunctionParameterNaming")
+            addMember("%S", "MaxLineLength")
         }
     )
 }
