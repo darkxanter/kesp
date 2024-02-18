@@ -359,6 +359,12 @@ public open class UserTableRepository {
     UserTable.insertDto(dto)
   }
 
+  public fun createMultiple(dtos: Iterable<UserTableCreate>): Unit {
+      transaction {
+          ArticleTagsTable.batchInsertDtos(dtos)
+      }
+  }
+
   public fun update(id: Long, dto: UserTableCreate): Int = transaction {
     UserTable.updateDto(id, dto)
   }
@@ -558,8 +564,8 @@ Add `kesp` dependencies:
 
 ```kotlin
 dependencies {
-    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.10.0")
-    ksp("io.github.darkxanter.exposed:kesp-processor:0.10.0")
+    compileOnly("io.github.darkxanter.exposed:kesp-annotations:0.11.0")
+    ksp("io.github.darkxanter.exposed:kesp-processor:0.11.0")
 }
 ```
 
@@ -584,7 +590,7 @@ sourceSets.configureEach {
 
 License
 ======
-    Copyright 2022 Sergey Shumov
+    Copyright 2022-2024 Sergey Shumov
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
