@@ -98,10 +98,8 @@ class SimpleTest : BaseKspTest() {
 
             package test.simple
 
-            import java.time.LocalDate
             import kotlin.Int
             import kotlin.Long
-            import kotlin.String
             import kotlin.Suppress
             import kotlin.Unit
             import kotlin.collections.Iterable
@@ -125,31 +123,6 @@ class SimpleTest : BaseKspTest() {
             public fun UserTable.updateDto(id: Long, dto: UserTableCreate): Int =
                 UserTable.update({UserTable.id.eq(id)}) {
               it.fromDto(dto)
-            }
-
-            public fun UserTable.insertDto(
-              username: String,
-              password: String,
-              birthDate: LocalDate? = null,
-            ): Long = UserTable.insertAndGetId {
-              it.fromDto(
-                username = username,
-                password = password,
-                birthDate = birthDate,
-              )
-            }.value
-
-            public fun UserTable.updateDto(
-              id: Long,
-              username: String,
-              password: String,
-              birthDate: LocalDate? = null,
-            ): Int = UserTable.update({UserTable.id.eq(id)}) {
-              it.fromDto(
-                username = username,
-                password = password,
-                birthDate = birthDate,
-              )
             }
 
             public fun ResultRow.toUserTableFullDto(): UserTableFullDto = UserTableFullDto(
@@ -182,16 +155,6 @@ class SimpleTest : BaseKspTest() {
               this[UserTable.username] = dto.username
               this[UserTable.password] = dto.password
               this[UserTable.birthDate] = dto.birthDate
-            }
-
-            public fun UpdateBuilder<*>.fromDto(
-              username: String,
-              password: String,
-              birthDate: LocalDate? = null,
-            ): Unit {
-              this[UserTable.username] = username
-              this[UserTable.password] = password
-              this[UserTable.birthDate] = birthDate
             }
             """.trimIndent()
         ),

@@ -127,49 +127,6 @@ private fun FileSpec.Builder.generateTableFunctions(
             )
         }
     }
-
-/// insertDto and updateDto with columns as parameters
-
-    addFunction(tableDefinition.insertDtoFunName) {
-        receiver(tableClassName)
-        addColumnsAsParameters(tableDefinition.explicitColumns)
-
-        primaryKey.singleOrNull()?.let {
-            returns(it.className)
-            addReturn()
-        }
-
-        addCodeBlock {
-            beginControlFlow("$tableName.$insertFun")
-            addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.explicitColumns) { column ->
-                CallableParam(column.name, column.name)
-            }
-            endControlFlowWithPrimaryKey()
-        }
-    }
-
-    if (tableDefinition.hasUpdateFun) {
-        addFunction(tableDefinition.updateDtoFunName) {
-            receiver(tableClassName)
-            returns(Int::class)
-
-            val columns = setOf(
-                primaryKey,
-                tableDefinition.explicitColumns,
-            ).flatten()
-
-            addColumnsAsParameters(columns)
-
-            addReturn()
-            addCodeBlock {
-                beginControlFlow(updateFun)
-                addCall("it.$MAPPING_FROM_FUN_NAME", tableDefinition.commonColumns) { column ->
-                    CallableParam(column.name, column.name)
-                }
-                endControlFlow()
-            }
-        }
-    }
 }
 
 private fun FileSpec.Builder.generateUpdateFunction(
@@ -225,19 +182,6 @@ private fun FileSpec.Builder.generateMappingFunctions(
             tableDefinition,
         )
     }
-
-    val updateBuilderClassName = ClassName(
-        "org.jetbrains.exposed.sql.statements", "UpdateBuilder"
-    ).parameterizedBy(STAR)
-    addFunction(MAPPING_FROM_FUN_NAME) {
-        receiver(updateBuilderClassName)
-        addColumnsAsParameters(tableDefinition.explicitColumns)
-        tableDefinition.explicitColumns.forEach { column ->
-            val name = column.name
-            addStatement("this[$tableName.$name] = $name")
-        }
-    }
-
 
     tableDefinition.projections.filter { it.updateFunction }.forEach { projection ->
         generateWriteMappings(projection.className, projection.columns, tableDefinition)

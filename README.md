@@ -200,16 +200,6 @@ public fun UpdateBuilder<*>.fromDto(dto: UserTableCreate): Unit {
   this[UserTable.password] = dto.password
   this[UserTable.birthDate] = dto.birthDate
 }
-
-public fun UpdateBuilder<*>.fromDto(
-  username: String,
-  password: String,
-  birthDate: LocalDate? = null,
-): Unit {
-  this[UserTable.username] = username
-  this[UserTable.password] = password
-  this[UserTable.birthDate] = birthDate
-}
 ```
 
 - `insertDto` and `updateDto` extension functions for the table
@@ -221,31 +211,6 @@ public fun UserTable.insertDto(dto: UserTableCreate): Long = UserTable.insertAnd
 public fun UserTable.updateDto(id: Long, dto: UserTableCreate): Int =
     UserTable.update({UserTable.id.eq(id)}) {
   it.fromDto(dto)
-}
-
-public fun UserTable.insertDto(
-  username: String,
-  password: String,
-  birthDate: LocalDate? = null,
-): Long = UserTable.insertAndGetId {
-  it.fromDto(
-    username = username,
-    password = password,
-    birthDate = birthDate,
-  )
-}.value
-
-public fun UserTable.updateDto(
-  id: Long,
-  username: String,
-  password: String,
-  birthDate: LocalDate? = null,
-): Int = UserTable.update({UserTable.id.eq(id)}) {
-  it.fromDto(
-    username = username,
-    password = password,
-    birthDate = birthDate,
-  )
 }
 ```
 
