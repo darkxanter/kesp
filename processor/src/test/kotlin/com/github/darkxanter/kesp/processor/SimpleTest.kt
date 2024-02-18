@@ -94,6 +94,7 @@ class SimpleTest : BaseKspTest() {
               "MemberVisibilityCanBePrivate",
               "MatchingDeclarationName",
               "FunctionParameterNaming",
+              "MaxLineLength",
             )
 
             package test.simple
@@ -170,6 +171,7 @@ class SimpleTest : BaseKspTest() {
                   "MemberVisibilityCanBePrivate",
                   "MatchingDeclarationName",
                   "FunctionParameterNaming",
+                  "MaxLineLength",
                 )
 
                 package test.simple
@@ -267,6 +269,7 @@ class SimpleTest : BaseKspTest() {
                   "MemberVisibilityCanBePrivate",
                   "MatchingDeclarationName",
                   "FunctionParameterNaming",
+                  "MaxLineLength",
                 )
 
                 package test.simple
@@ -278,6 +281,7 @@ class SimpleTest : BaseKspTest() {
                 import kotlin.Unit
                 import kotlin.collections.Iterable
                 import kotlin.collections.List
+                import org.jetbrains.exposed.sql.Database
                 import org.jetbrains.exposed.sql.ISqlExpressionBuilder
                 import org.jetbrains.exposed.sql.Op
                 import org.jetbrains.exposed.sql.Query
@@ -285,18 +289,19 @@ class SimpleTest : BaseKspTest() {
                 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
                 import org.jetbrains.exposed.sql.and
                 import org.jetbrains.exposed.sql.deleteWhere
-                import org.jetbrains.exposed.sql.select
                 import org.jetbrains.exposed.sql.selectAll
                 import org.jetbrains.exposed.sql.transactions.transaction
 
-                public open class UserTableRepository {
+                public open class UserTableRepository(
+                  protected val db: Database? = null,
+                ) {
                   public fun find(configure: Query.(table: UserTable) -> Unit = {},
                       `where`: (SqlExpressionBuilder.(table: UserTable) -> Op<Boolean>)? = null):
                       List<UserTableFullDto> {
 
-                    return transaction {
+                    return transaction(db = db) {
                       if (where != null) {
-                        UserTable.select{where(UserTable)}.apply{configure(UserTable)}.toUserTableFullDtoList()
+                        UserTable.selectAll().where{where(UserTable)}.apply{configure(UserTable)}.toUserTableFullDtoList()
                       } else {
                         UserTable.selectAll().apply{configure(UserTable)}.toUserTableFullDtoList()
                       }
@@ -316,15 +321,15 @@ class SimpleTest : BaseKspTest() {
                     }
                   }
 
-                  public fun create(dto: UserTableCreate): Long = transaction {
+                  public fun create(dto: UserTableCreate): Long = transaction(db = db) {
                     UserTable.insertDto(dto)
                   }
 
-                  public fun createMultiple(dtos: Iterable<UserTableCreate>): List<Long> = transaction {
+                  public fun createMultiple(dtos: Iterable<UserTableCreate>): List<Long> = transaction(db = db) {
                     UserTable.batchInsertDtos(dtos)
                   }
 
-                  public fun update(id: Long, dto: UserTableCreate): Int = transaction {
+                  public fun update(id: Long, dto: UserTableCreate): Int = transaction(db = db) {
                     UserTable.updateDto(id, dto)
                   }
 
@@ -334,7 +339,7 @@ class SimpleTest : BaseKspTest() {
 
                   public fun delete(`where`: UserTable.(ISqlExpressionBuilder) -> Op<Boolean>): Int {
 
-                    return transaction {
+                    return transaction(db = db) {
                       UserTable.deleteWhere {
                         where(it)
                       }

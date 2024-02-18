@@ -7,6 +7,8 @@ import com.github.darkxanter.kesp.processor.helpers.addClass
 import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
 import com.github.darkxanter.kesp.processor.helpers.addFunction
 import com.github.darkxanter.kesp.processor.helpers.addParameter
+import com.github.darkxanter.kesp.processor.helpers.addPrimaryConstructor
+import com.github.darkxanter.kesp.processor.helpers.addProperty
 import com.github.darkxanter.kesp.processor.helpers.addReturn
 import com.github.darkxanter.kesp.processor.helpers.createParameter
 import com.google.devtools.ksp.processing.KSPLogger
@@ -64,6 +66,17 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
     addClass(tableDefinition.repositoryClassName) {
         addModifiers(KModifier.OPEN)
+
+        addPrimaryConstructor {
+            val databaseClassName = ClassName("org.jetbrains.exposed.sql", "Database").copy(nullable = true)
+            addParameter("db", databaseClassName) {
+                defaultValue("%L", null)
+            }
+            addProperty("db", databaseClassName) {
+                initializer("db")
+                addModifiers(KModifier.PROTECTED)
+            }
+        }
 
         if (tableDefinition.configuration.tableFunctions) {
 
@@ -190,7 +203,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
 private fun FunSpec.Builder.transactionBlock(transaction: CodeBlock.Builder.() -> Unit) {
     addCodeBlock {
-        beginControlFlow("transaction")
+        beginControlFlow("transaction(db = db)")
         transaction()
         endControlFlow()
     }

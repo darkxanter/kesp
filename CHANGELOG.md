@@ -6,6 +6,7 @@ The minimum supported version of Exposed is now 0.46.0.
 
 ### Improvements
 - Update Kotlin to 1.9.22
+- Support for providing a database instance to the CRUD repository
 
 # 0.11.0
 
