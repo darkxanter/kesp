@@ -1,3 +1,8 @@
+# 0.12.1
+
+Fix migration to new query DSL
+
+
 # 0.12.0
 
 ### Breaking changes

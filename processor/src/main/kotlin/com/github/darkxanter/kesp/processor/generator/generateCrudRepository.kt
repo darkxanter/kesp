@@ -97,7 +97,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                     tableTypeName = tableTypeName,
                     listClassName = projection.className,
                     toFunctionName = projection.toFunctionListName,
-                    sliceColumns = projection.columns,
+                    selectColumns = projection.columns,
                 )
             }
 
@@ -216,15 +216,15 @@ private fun TypeSpec.Builder.addFindFunction(
     tableTypeName: TypeName,
     listClassName: ClassName,
     toFunctionName: String,
-    sliceColumns: List<ColumnDefinition> = emptyList(),
+    selectColumns: List<ColumnDefinition> = emptyList(),
 ) {
     val toFun = "${toFunctionName}()"
 
-    val slice = if (sliceColumns.isNotEmpty())
-        sliceColumns.joinToString(",", prefix = ".slice(", postfix = ")") {
+    val select = if (selectColumns.isNotEmpty())
+        selectColumns.joinToString(",", prefix = "select(", postfix = ")") {
             "$tableName.${it.name}"
         }
-    else ""
+    else "selectAll()"
 
     addFunction(name) {
         returns(List::class.asClassName().parameterizedBy(listClassName))
@@ -241,9 +241,9 @@ private fun TypeSpec.Builder.addFindFunction(
         addReturn()
         transactionBlock {
             beginControlFlow("if (where != null)")
-            addStatement("${tableName}${slice}.selectAll().where{where($tableName)}.apply{configure($tableName)}.$toFun")
+            addStatement("${tableName}.${select}.where{where($tableName)}.apply{configure($tableName)}.$toFun")
             nextControlFlow("else")
-            addStatement("${tableName}${slice}.selectAll().apply{configure($tableName)}.$toFun")
+            addStatement("${tableName}.${select}.apply{configure($tableName)}.$toFun")
             endControlFlow()
         }
     }
