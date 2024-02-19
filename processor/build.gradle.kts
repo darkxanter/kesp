@@ -17,7 +17,7 @@ dependencies {
     testImplementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     testImplementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing-ksp:1.5.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.6.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 }
 
 tasks.jar {
