@@ -10,6 +10,7 @@ import com.github.darkxanter.kesp.processor.extensions.filterAnnotations
 import com.github.darkxanter.kesp.processor.extensions.getFirstArgumentType
 import com.github.darkxanter.kesp.processor.extensions.getValue
 import com.github.darkxanter.kesp.processor.extensions.isEmpty
+import com.github.darkxanter.kesp.processor.extensions.isIdTable
 import com.github.darkxanter.kesp.processor.extensions.isMatched
 import com.github.darkxanter.kesp.processor.extensions.panic
 import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
@@ -88,9 +89,7 @@ internal class ExposedTableGenerator(
 
     @OptIn(KspExperimental::class)
     private fun getTableColumns(classDeclaration: KSClassDeclaration): List<ColumnDefinition> {
-        val isDefaultExposedTable = classDeclaration.getAllSuperTypes().any {
-            it.isMatched("org.jetbrains.exposed.dao.id.IdTable")
-        }
+        val isIdTable = classDeclaration.isIdTable()
 
         return classDeclaration.getAllProperties().filter {
             it.simpleName.asString() != "autoIncColumn"
@@ -101,10 +100,10 @@ internal class ExposedTableGenerator(
             }
             val columnName = declaration.simpleName.asString()
 
-            val isGeneratedColumn = isDefaultExposedTable && columnName == "id"
+            val isGeneratedColumn = isIdTable && columnName == "id"
                 || declaration.getAnnotationsByType(GeneratedValue::class).isEmpty().not()
 
-            val isPrimaryKey = isDefaultExposedTable && columnName == "id"
+            val isPrimaryKey = isIdTable && columnName == "id"
                 || declaration.getAnnotationsByType(Id::class).isEmpty().not()
 
 
