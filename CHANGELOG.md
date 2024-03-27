@@ -1,3 +1,8 @@
+# 0.13.0
+
+### Improvements
+- Support for custom id tables
+
 # 0.12.1
 
 Fix migration to new query DSL
