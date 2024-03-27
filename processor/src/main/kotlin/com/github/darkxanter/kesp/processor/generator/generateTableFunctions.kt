@@ -31,13 +31,14 @@ private fun FileSpec.Builder.generateTableFunctions(
     tableDefinition: TableDefinition,
 ) {
     val tableName = tableDefinition.tableName
-    val tableClassName = tableDefinition.tableClassName
     val primaryKey = tableDefinition.primaryKey
+
+    val useInsertAndGetId = primaryKey.size == 1 && tableDefinition.isIdTable
 
     addImport(
         "org.jetbrains.exposed.sql",
         "batchInsert",
-        if (primaryKey.size == 1) "insertAndGetId" else "insert",
+        if (useInsertAndGetId) "insertAndGetId" else "insert",
         "update"
     )
     if (primaryKey.size > 1) {
@@ -47,7 +48,7 @@ private fun FileSpec.Builder.generateTableFunctions(
         )
     }
 
-    val insertFun = if (primaryKey.size == 1) "insertAndGetId" else "insert"
+    val insertFun = if (useInsertAndGetId) "insertAndGetId" else "insert"
 
     val updateWhere = primaryKey.mapIndexed { index, column ->
         val statement = "$tableName.${column.name}.eq(${column.name})"
@@ -60,21 +61,26 @@ private fun FileSpec.Builder.generateTableFunctions(
     val updateFun = "$tableName.update({$updateWhere})"
 
     fun CodeBlock.Builder.endControlFlowWithPrimaryKey() {
-        if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
-            endControlFlow(".value")
+        if (primaryKey.size == 1) {
+            if (primaryKey.first().isEntityId) {
+                endControlFlow(".value")
+            } else {
+                endControlFlow("[$tableName.${primaryKey.first().name}]")
+            }
         } else {
             endControlFlow()
         }
     }
 
     fun CodeBlock.Builder.endControlFlowWithListOfPrimaryKeys() {
-        if (primaryKey.size == 1 && primaryKey.first().isEntityId) {
-            endControlFlow(".map { it[$tableName.${primaryKey.first().name}].value }")
+        if (primaryKey.size == 1) {
+            val key = primaryKey.first()
+            val suffix = if (key.isEntityId) ".value" else ""
+            endControlFlow(".map { it[$tableName.${key.name}]${suffix} }")
         } else {
             endControlFlow()
         }
     }
-
 
     if (tableDefinition.configuration.models) {
         addFunction(tableDefinition.batchInsertDtoFunName) {

@@ -6,12 +6,16 @@ import example.basic.database.ArticleTableRepository
 import example.basic.database.ArticleTagsTable
 import example.basic.database.ArticleTagsTableCreateDto
 import example.basic.database.ArticleTagsTableRepository
+import example.basic.database.CustomIdTable
+import example.basic.database.CustomIdTableCreateDto
 import example.basic.database.TagTable
 import example.basic.database.TagTableCreateDto
 import example.basic.database.TagTableRepository
 import example.basic.database.UserTable
 import example.basic.database.UserTableCreateDto
 import example.basic.database.UserTableRepository
+import example.basic.database.batchInsertDtos
+import example.basic.database.insertDto
 import example.basic.database.toUserTableFullDtoList
 import example.basic.dto.UserDto
 import org.jetbrains.exposed.sql.Database
@@ -23,6 +27,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Connection
+import java.util.UUID
 
 fun main() {
     Database.connect("jdbc:sqlite:file:test?mode=memory&cache=shared", "org.sqlite.JDBC")
@@ -46,6 +51,7 @@ fun main() {
             ArticleTable,
             ArticleTagsTable,
             TagTable,
+            CustomIdTable,
         )
         printDivider()
 
@@ -90,6 +96,19 @@ fun main() {
         articleRepository.deleteById(articleId)
         tagRepository.deleteById(tagId)
         userRepository.deleteById(userId)
+
+        transaction {
+            val customUuid = UUID.randomUUID()
+            val returnedUuid = CustomIdTable.insertDto(CustomIdTableCreateDto(customUuid, true))
+            assert(customUuid == returnedUuid)
+        }
+        transaction {
+            val batchIds = listOf(UUID.randomUUID(), UUID.randomUUID())
+            val returnedIds = CustomIdTable.batchInsertDtos(batchIds.map { CustomIdTableCreateDto(it, true) })
+            returnedIds.zip(batchIds).forEach {
+                assert(it.first == it.second)
+            }
+        }
     }
 }
 
