@@ -1,9 +1,8 @@
 package example.value_class
 
 import com.github.darkxanter.kesp.annotation.ExposedTable
-import com.github.darkxanter.kesp.annotation.GeneratedValue
-import example.value_class.CommentTable.text
-import org.jetbrains.exposed.dao.id.IdTable
+import com.github.darkxanter.kesp.annotation.Id
+import org.jetbrains.exposed.sql.Table
 
 @JvmInline
 value class ArticleId(override val value: Int) : ValueId<Int>
@@ -20,4 +19,12 @@ value class CommentId(override val value: Int) : ValueId<Int>
 object CommentTable : ValueIntIdTable<CommentId>("comments", ::CommentId, CommentId::class) {
     val articleId = reference("article_id", ArticleTable.id)
     val message = text("message")
+}
+
+
+@ExposedTable
+object TableWithCustomId : Table("table_with_custom_id") {
+    @Id
+    val articleId = reference("article_id", ArticleTable.id)
+    val description = text("description")
 }

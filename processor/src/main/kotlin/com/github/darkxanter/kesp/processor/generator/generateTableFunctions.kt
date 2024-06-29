@@ -62,11 +62,14 @@ private fun FileSpec.Builder.generateTableFunctions(
 
     fun CodeBlock.Builder.endControlFlowWithPrimaryKey() {
         if (primaryKey.size == 1) {
-            if (primaryKey.first().isEntityId) {
-                endControlFlow(".value")
-            } else {
-                endControlFlow("[$tableName.${primaryKey.first().name}]")
+            val key = primaryKey.first()
+            val expr = buildString {
+                if (!tableDefinition.isIdTable)
+                    append("[$tableName.${key.name}]")
+                if (key.isEntityId)
+                    append(".value")
             }
+            endControlFlow(expr)
         } else {
             endControlFlow()
         }

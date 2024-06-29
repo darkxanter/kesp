@@ -1,3 +1,7 @@
+# 0.13.1
+## Bug fixes
+- Fix primary key handling for reference columns
+
 # 0.13.0
 
 ### Improvements
