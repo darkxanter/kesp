@@ -1,3 +1,7 @@
+# 0.14.0
+## Improvements
+- Support table classes
+
 # 0.13.1
 ## Bug fixes
 - Fix primary key handling for reference columns
