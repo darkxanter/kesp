@@ -1,6 +1,6 @@
 # Kesp
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.darkxanter.exposed/kesp-annotations)](https://search.maven.org/artifact/io.github.darkxanter.exposed/kesp-annotations)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.darkxanter.exposed/kesp-annotations)](https://central.sonatype.com/artifact/io.github.darkxanter.exposed/kesp-annotations)
 
 **Kesp** is Kotlin Symbol Processor for [Exposed SQL DSL](https://github.com/JetBrains/Exposed/wiki/DSL).
 It generates for you DTOs, table mappings and a CRUD repository for an Exposed table.

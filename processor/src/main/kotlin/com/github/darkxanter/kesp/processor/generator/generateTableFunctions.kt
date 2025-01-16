@@ -2,6 +2,7 @@ package com.github.darkxanter.kesp.processor.generator
 
 import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
 import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
+import com.github.darkxanter.kesp.processor.generator.model.TableKind
 import com.github.darkxanter.kesp.processor.helpers.CallableParam
 import com.github.darkxanter.kesp.processor.helpers.addCall
 import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
@@ -13,6 +14,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.asClassName
@@ -30,7 +32,11 @@ private fun FileSpec.Builder.generateTableFunctions(
     interfaceClassName: ClassName,
     tableDefinition: TableDefinition,
 ) {
-    val tableName = tableDefinition.tableName
+    val tableName = when (tableDefinition.tableKind) {
+        TableKind.Class -> "table"
+        TableKind.Object -> tableDefinition.tableName
+    }
+
     val primaryKey = tableDefinition.primaryKey
 
     val useInsertAndGetId = primaryKey.size == 1 && tableDefinition.isIdTable
@@ -90,6 +96,11 @@ private fun FileSpec.Builder.generateTableFunctions(
             receiver(tableDefinition.tableClassName)
             addParameter("dtos", Iterable::class.asClassName().parameterizedBy(interfaceClassName))
 
+            when (tableDefinition.tableKind) {
+                TableKind.Object -> {}
+                TableKind.Class -> addStatement("val table = this")
+            }
+
             primaryKey.singleOrNull()?.let {
                 returns(List::class.asClassName().parameterizedBy(it.className))
                 addReturn()
@@ -97,7 +108,10 @@ private fun FileSpec.Builder.generateTableFunctions(
 
             addCodeBlock {
                 beginControlFlow("$tableName.batchInsert(dtos)")
-                addStatement("this.$MAPPING_FROM_FUN_NAME(it)")
+                when (tableDefinition.tableKind) {
+                    TableKind.Object -> addStatement("this.$MAPPING_FROM_FUN_NAME(it)")
+                    TableKind.Class -> addStatement("this.$MAPPING_FROM_FUN_NAME(table, it)")
+                }
                 endControlFlowWithListOfPrimaryKeys()
             }
         }
@@ -106,6 +120,11 @@ private fun FileSpec.Builder.generateTableFunctions(
             receiver(tableDefinition.tableClassName)
             addParameter("dto", interfaceClassName)
 
+            when (tableDefinition.tableKind) {
+                TableKind.Object -> {}
+                TableKind.Class -> addStatement("val table = this")
+            }
+
             primaryKey.singleOrNull()?.let {
                 returns(it.className)
                 addReturn()
@@ -113,7 +132,10 @@ private fun FileSpec.Builder.generateTableFunctions(
 
             addCodeBlock {
                 beginControlFlow("$tableName.$insertFun")
-                addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+                when (tableDefinition.tableKind) {
+                    TableKind.Object -> addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+                    TableKind.Class -> addStatement("it.$MAPPING_FROM_FUN_NAME(table, dto)")
+                }
                 endControlFlowWithPrimaryKey()
             }
         }
@@ -150,10 +172,18 @@ private fun FileSpec.Builder.generateUpdateFunction(
         addColumnsAsParameters(tableDefinition.primaryKey)
         addParameter("dto", dtoClassName)
 
+        when (tableDefinition.tableKind) {
+            TableKind.Object -> {}
+            TableKind.Class -> addStatement("val table = this")
+        }
+
         addReturn()
         addCodeBlock {
             beginControlFlow(updateFun)
-            addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+            when (tableDefinition.tableKind) {
+                TableKind.Object -> addStatement("it.$MAPPING_FROM_FUN_NAME(dto)")
+                TableKind.Class -> addStatement("it.$MAPPING_FROM_FUN_NAME(table, dto)")
+            }
             endControlFlow()
         }
     }
@@ -166,8 +196,6 @@ private fun FileSpec.Builder.generateMappingFunctions(
     interfaceClassName: ClassName,
     tableDefinition: TableDefinition,
 ) {
-    val tableName = tableDefinition.tableName
-
     addImport("org.jetbrains.exposed.sql", "ResultRow", "Alias")
 
     // read
@@ -202,7 +230,10 @@ private fun FileSpec.Builder.generateReadMappings(
     columns: List<ColumnDefinition>,
     tableDefinition: TableDefinition,
 ) {
-    val tableName = tableDefinition.tableName
+    val tableName = when (tableDefinition.tableKind) {
+        TableKind.Class -> "table"
+        TableKind.Object -> tableDefinition.tableName
+    }
 
     val functionName = "to${dtoClassName.simpleName}"
     val functionListName = "${functionName}List"
@@ -210,9 +241,19 @@ private fun FileSpec.Builder.generateReadMappings(
     val aliasClassName = ClassName("org.jetbrains.exposed.sql", "Alias")
         .parameterizedBy(tableDefinition.tableClassName)
 
+    fun FunSpec.Builder.addParameterForTableKind() {
+        when (tableDefinition.tableKind) {
+            TableKind.Class -> addParameter("table", tableDefinition.tableClassName)
+            TableKind.Object -> {}
+        }
+    }
+
     addFunction(functionName) {
         receiver(resultRowClassName)
         returns(dtoClassName)
+
+        addParameterForTableKind()
+
         addCodeBlock {
             addReturn()
             addCall(dtoClassName.simpleName, columns) { column ->
@@ -226,6 +267,7 @@ private fun FileSpec.Builder.generateReadMappings(
         receiver(resultRowClassName)
         returns(dtoClassName)
 
+        addParameterForTableKind()
         addParameter("alias", aliasClassName)
 
         addCodeBlock {
@@ -240,10 +282,19 @@ private fun FileSpec.Builder.generateReadMappings(
     addFunction(functionListName) {
         receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
         returns(List::class.asClassName().parameterizedBy(dtoClassName))
+
+        when (tableDefinition.tableKind) {
+            TableKind.Class -> addParameter("table", tableDefinition.tableClassName)
+            TableKind.Object -> {}
+        }
+
         addCodeBlock {
             addReturn()
             beginControlFlow("map")
-            addStatement("it.${functionName}()")
+            when (tableDefinition.tableKind) {
+                TableKind.Object -> addStatement("it.${functionName}()")
+                TableKind.Class -> addStatement("it.${functionName}(table)")
+            }
             endControlFlow()
         }
     }
@@ -252,12 +303,16 @@ private fun FileSpec.Builder.generateReadMappings(
         receiver(Iterable::class.asClassName().parameterizedBy(resultRowClassName))
         returns(List::class.asClassName().parameterizedBy(dtoClassName))
 
+        addParameterForTableKind()
         addParameter("alias", aliasClassName)
 
         addCodeBlock {
             addReturn()
             beginControlFlow("map")
-            addStatement("it.${functionName}(alias)")
+            when (tableDefinition.tableKind) {
+                TableKind.Object -> addStatement("it.${functionName}(alias)")
+                TableKind.Class -> addStatement("it.${functionName}(table, alias)")
+            }
             endControlFlow()
         }
     }
@@ -269,7 +324,10 @@ private fun FileSpec.Builder.generateWriteMappings(
     columns: List<ColumnDefinition>,
     tableDefinition: TableDefinition,
 ) {
-    val tableName = tableDefinition.tableName
+    val tableName = when (tableDefinition.tableKind) {
+        TableKind.Class -> "table"
+        TableKind.Object -> tableDefinition.tableName
+    }
 
     val explicitColumns = columns.intersect(tableDefinition.explicitColumns.toSet())
 
@@ -279,6 +337,11 @@ private fun FileSpec.Builder.generateWriteMappings(
 
     addFunction(MAPPING_FROM_FUN_NAME) {
         receiver(updateBuilderClassName)
+
+        when (tableDefinition.tableKind) {
+            TableKind.Class -> addParameter("table", tableDefinition.tableClassName)
+            TableKind.Object -> {}
+        }
         addParameter("dto", dtoClassName)
 
         explicitColumns.forEach { column ->

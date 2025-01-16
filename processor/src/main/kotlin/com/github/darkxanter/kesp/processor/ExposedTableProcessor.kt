@@ -19,6 +19,8 @@ public class ExposedTableProcessor(
     private val logger: KSPLogger,
     private val options: Map<String, String>,
 ) : SymbolProcessor {
+    private val supportedClassKinds = setOf(ClassKind.OBJECT, ClassKind.CLASS)
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
         logger.info("Kesp processing round start")
         val configuration = Configuration(
@@ -29,8 +31,8 @@ public class ExposedTableProcessor(
         val resolvedSymbols = resolver.getSymbolsWithAnnotation<ExposedTable>()
 
         val invalidSymbols = processSymbols(resolvedSymbols, exposedTableGenerator) { symbol ->
-            if (symbol !is KSClassDeclaration || symbol.classKind != ClassKind.OBJECT) {
-                logger.panic("@ExposedTable can be applied only to object")
+            if (symbol !is KSClassDeclaration || !supportedClassKinds.contains(symbol.classKind)) {
+                logger.panic("@ExposedTable can be applied only to $supportedClassKinds")
             }
         }
         logger.info("Kesp processing round end")

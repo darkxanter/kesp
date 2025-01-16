@@ -3,6 +3,7 @@ package com.github.darkxanter.kesp.processor.generator
 import com.github.darkxanter.kesp.processor.extensions.panic
 import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
 import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
+import com.github.darkxanter.kesp.processor.generator.model.TableKind
 import com.github.darkxanter.kesp.processor.helpers.addClass
 import com.github.darkxanter.kesp.processor.helpers.addCodeBlock
 import com.github.darkxanter.kesp.processor.helpers.addFunction
@@ -43,9 +44,16 @@ private fun queryTypeName(tableTypeName: TypeName) = LambdaTypeName.get(
 )
 
 internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefinition, logger: KSPLogger) {
-    val tableName = tableDefinition.tableName
+    val tableName = when (tableDefinition.tableKind) {
+        TableKind.Class -> "table"
+        TableKind.Object -> tableDefinition.tableName
+    }
     val tableTypeName = tableDefinition.tableClassName
 
+    val toFunctionArgs = when (tableDefinition.tableKind) {
+        TableKind.Object -> ""
+        TableKind.Class -> "table"
+    }
 
     addImport("org.jetbrains.exposed.sql.transactions", "transaction")
     addImport("org.jetbrains.exposed.sql", "selectAll", "deleteWhere", "and")
@@ -69,6 +77,18 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
 
         addPrimaryConstructor {
             val databaseClassName = ClassName("org.jetbrains.exposed.sql", "Database").copy(nullable = true)
+
+            when (tableDefinition.tableKind) {
+                TableKind.Object -> {}
+                TableKind.Class -> {
+                    addParameter("table", tableTypeName)
+                    addProperty("table", tableTypeName) {
+                        initializer("table")
+                        addModifiers(KModifier.PROTECTED)
+                    }
+                }
+            }
+
             addParameter("db", databaseClassName) {
                 defaultValue("%L", null)
             }
@@ -87,6 +107,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                     tableTypeName = tableTypeName,
                     listClassName = tableDefinition.fullDtoClassName,
                     toFunctionName = tableDefinition.toDtoListFunName,
+                    toFunctionArgs = toFunctionArgs,
                 )
             }
 
@@ -97,6 +118,7 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                     tableTypeName = tableTypeName,
                     listClassName = projection.className,
                     toFunctionName = projection.toFunctionListName,
+                    toFunctionArgs = toFunctionArgs,
                     selectColumns = projection.columns,
                 )
             }
@@ -153,12 +175,14 @@ internal fun FileSpec.Builder.generateCrudRepository(tableDefinition: TableDefin
                 if (tableDefinition.configuration.models) {
                     addUpdateFunction(
                         name = "update",
+                        tableName = tableName,
                         dtoClassName = tableDefinition.createInterfaceClassName,
                         tableDefinition = tableDefinition,
                     )
                 }
                 tableDefinition.projections.filter { it.updateFunction }.forEach {
                     addUpdateFunction(
+                        tableName = tableName,
                         name = "update${it.className.simpleName}",
                         dtoClassName = it.className,
                         tableDefinition = tableDefinition,
@@ -216,9 +240,10 @@ private fun TypeSpec.Builder.addFindFunction(
     tableTypeName: TypeName,
     listClassName: ClassName,
     toFunctionName: String,
+    toFunctionArgs: String,
     selectColumns: List<ColumnDefinition> = emptyList(),
 ) {
-    val toFun = "${toFunctionName}()"
+    val toFun = "${toFunctionName}($toFunctionArgs)"
 
     val select = if (selectColumns.isNotEmpty())
         selectColumns.joinToString(",", prefix = "select(", postfix = ")") {
@@ -252,11 +277,10 @@ private fun TypeSpec.Builder.addFindFunction(
 
 private fun TypeSpec.Builder.addUpdateFunction(
     name: String,
+    tableName: String,
     dtoClassName: ClassName,
     tableDefinition: TableDefinition,
 ) {
-    val tableName = tableDefinition.tableName
-
     addFunction(name) {
         returns(Int::class)
         tableDefinition.primaryKey.forEach {

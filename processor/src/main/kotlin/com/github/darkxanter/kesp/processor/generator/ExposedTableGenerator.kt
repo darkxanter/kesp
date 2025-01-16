@@ -16,9 +16,9 @@ import com.github.darkxanter.kesp.processor.extensions.panic
 import com.github.darkxanter.kesp.processor.generator.model.ColumnDefinition
 import com.github.darkxanter.kesp.processor.generator.model.ProjectionDefinition
 import com.github.darkxanter.kesp.processor.generator.model.TableDefinition
+import com.github.darkxanter.kesp.processor.generator.model.TableKind
 import com.github.darkxanter.kesp.processor.helpers.createFile
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
@@ -64,8 +64,9 @@ internal class ExposedTableGenerator(
             }
         }
         if (exposedTable.generateDao) {
-//            val foreignKeys = getForeignKeys(classDeclaration)
-
+            if (tableDefinition.tableKind != TableKind.Object) {
+                logger.panic("DAO generation is supported for table objects only")
+            }
             writeFile(tableDefinition, "${tableDefinition.tableName}Dao") {
                 generateDao(tableDefinition, /*foreignKeys,*/ logger)
             }

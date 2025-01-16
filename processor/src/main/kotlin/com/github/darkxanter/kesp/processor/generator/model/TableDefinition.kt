@@ -3,6 +3,7 @@ package com.github.darkxanter.kesp.processor.generator.model
 import com.github.darkxanter.kesp.annotation.ExposedTable
 import com.github.darkxanter.kesp.processor.extensions.isIdTable
 import com.github.darkxanter.kesp.processor.extensions.toClassName
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.squareup.kotlinpoet.ksp.toClassName
 
@@ -13,6 +14,11 @@ internal data class TableDefinition(
     val projections: List<ProjectionDefinition>,
     val configuration: ExposedTable,
 ) {
+    val tableKind = when (declaration.classKind) {
+        ClassKind.CLASS -> TableKind.Class
+        ClassKind.OBJECT -> TableKind.Object
+        else -> error("Unsupported classKind ${declaration.classKind}")
+    }
     val isIdTable = declaration.isIdTable()
     val tableName = declaration.simpleName.asString()
     val tableClassName = declaration.toClassName()
@@ -41,4 +47,10 @@ internal data class TableDefinition(
     val updateDtoFunName = "updateDto"
     val toDtoFunName = "to${fullDtoClassName.simpleName}"
     val toDtoListFunName = "${toDtoFunName}List"
+}
+
+
+internal enum class TableKind {
+    Object,
+    Class,
 }
